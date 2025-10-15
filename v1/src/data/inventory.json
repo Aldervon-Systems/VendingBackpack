@@ -1,0 +1,71 @@
+{
+  "machine1": [
+    {
+      "sku": "item_1",
+      "name": "Coca\u2011Cola Classic",
+      "qty": 3,
+      "cap": 20
+    },
+    {
+      "sku": "item_2",
+      "name": "Coca\u2011Cola Zero",
+      "qty": 7,
+      "cap": 20
+    },
+    {
+      "sku": "item_3",
+      "name": "Sprite",
+      "qty": 9,
+      "cap": 20
+    },
+    {
+      "sku": "item_4",
+      "name": "Diet Coke",
+      "qty": 10,
+      "cap": 20
+    },
+    {
+      "sku": "item_5",
+      "name": "Coca\u2011Cola Cherry",
+      "qty": 18,
+      "cap": 20
+    },
+    {
+      "sku": "item_6",
+      "name": "Fanta Orange",
+      "qty": 9,
+      "cap": 20
+    },
+    {
+      "sku": "item_7",
+      "name": "Minute Maid",
+      "qty": 18,
+      "cap": 20
+    },
+    {
+      "sku": "item_8",
+      "name": "Dasani Water",
+      "qty": 8,
+      "cap": 20
+    },
+    {
+      "sku": "11258",
+      "name": "Red Bull Green",
+      "qty": 0,
+      "cap": 20
+    }
+  ],
+  "machine2": []
+ ,
+  "warehouse": [
+    {"sku": "item_1", "name": "Coca-Cola Classic", "qty": 120},
+    {"sku": "item_2", "name": "Coca-Cola Zero", "qty": 80},
+    {"sku": "item_3", "name": "Sprite", "qty": 95},
+    {"sku": "item_4", "name": "Diet Coke", "qty": 60},
+    {"sku": "item_5", "name": "Coca-Cola Cherry", "qty": 40},
+    {"sku": "item_6", "name": "Fanta Orange", "qty": 50},
+    {"sku": "item_7", "name": "Minute Maid", "qty": 70},
+    {"sku": "item_8", "name": "Dasani Water", "qty": 200},
+    {"sku": "11258", "name": "Red Bull Green", "qty": 25}
+  ]
+}
