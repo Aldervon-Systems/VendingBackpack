@@ -2,6 +2,47 @@
 version.h
 _build
 
+# General
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+*.egg-info/
+dist/
+build/
+*.db
+*.sqlite
+*.sqlite3
+
+# Node/Flutter
+node_modules/
+pubspec.lock
+.dart_tool/
+build/
+
+# Editor
+.vscode/
+.idea/
+
+# Docker & Environment
+.env
+docker-compose.override.yml
+
 # Binaries
 *.FCStd1
 *.stl
@@ -49,3 +90,8 @@ fp-info-cache
 
 # dev artifacts
 .vscode
+
+# Docker & Environment
+.env
+docker-compose.override.yml
+*.log

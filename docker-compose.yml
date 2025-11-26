@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: vending_backpack_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: vending_backpack
+      POSTGRES_USER: vending_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - vending_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vending_user -d vending_backpack"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Don't expose PostgreSQL port to host for security
+    # Only accessible within Docker network
+
+  backend:
+    build:
+      context: ./v1
+      dockerfile: Dockerfile
+    # Alternative: use pre-built image
+    # image: your-registry/vending-backend:latest
+    container_name: vending_backpack_backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      # Database connection string
+      DATABASE_URL: postgresql://vending_user:${DB_PASSWORD}@postgres:5432/vending_backpack
+      # Add other environment variables your backend needs
+      # EXAMPLE:
+      # API_KEY: ${API_KEY}
+      # LOG_LEVEL: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - vending_network
+
+volumes:
+  postgres_data:
+    driver: local
+    # Optional: specify driver options for better performance
+    # driver_opts:
+    #   type: none
+    #   device: /path/to/data
+    #   o: bind
+
+networks:
+  vending_network:
+    driver: bridge
