@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # Application Settings
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     DEBUG: bool = os.getenv("DEBUG", "True").lower() == "true"
-    DEMO_MODE: bool = os.getenv("DEMO_MODE", "False").lower() == "true"
+    # DEMO_MODE removed. Backend always uses real runtime database.
     
     # API Settings
     API_HOST: str = os.getenv("API_HOST", "0.0.0.0")

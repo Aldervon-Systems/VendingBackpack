@@ -7,9 +7,8 @@ import logging
 
 from .database import engine, Base, get_db, SessionLocal
 from .config import settings
-from .routers import items, transactions, demo
-from .services import HardwareInterface, MockHardwareService, RealHardwareService
-from .utils import seed_demo_data
+from .routers import items, transactions
+from .services import HardwareInterface, RealHardwareService
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -29,28 +28,11 @@ async def lifespan(app: FastAPI):
     
     # Initialize Hardware Service
     global hardware
-    if settings.DEMO_MODE:
-        logger.info("🎮 DEMO MODE ENABLED: Using Mock Hardware")
-        hardware = MockHardwareService()
-        
-        # Seed Demo Data
-        db = SessionLocal()
-        try:
-            seed_demo_data(db)
-        finally:
-            db.close()
-    else:
-        logger.info("🔌 REAL MODE: Using Real Hardware Service")
-        hardware = RealHardwareService()
-    
+    logger.info("🔌 REAL MODE: Using Real Hardware Service")
+    hardware = RealHardwareService()
     await hardware.initialize()
-    
-    # Inject hardware into app state for routers to access
     app.state.hardware = hardware
-    
     yield
-    
-    # Shutdown
     logger.info("🛑 Shutting down...")
 
 app = FastAPI(
@@ -72,14 +54,12 @@ app.add_middleware(
 # Include routers
 app.include_router(items.router, prefix="/api/items", tags=["items"])
 app.include_router(transactions.router, prefix="/api/transactions", tags=["transactions"])
-app.include_router(demo.router, prefix="/api", tags=["demo"])
 
 @app.get("/")
 async def root():
     return {
         "status": "online",
-        "service": "VendingBackpack API",
-        "demo_mode": settings.DEMO_MODE
+        "service": "VendingBackpack API"
     }
 
 @app.get("/health")
@@ -98,8 +78,7 @@ async def health_check(db: Session = Depends(get_db)):
         return {
             "status": "healthy", 
             "database": "connected",
-            "hardware": hw_status,
-            "demo_mode": settings.DEMO_MODE
+            "hardware": hw_status
         }
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")

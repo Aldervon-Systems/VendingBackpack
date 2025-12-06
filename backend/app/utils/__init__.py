@@ -1,3 +1,2 @@
-from .seeder import seed_demo_data
-
-__all__ = ["seed_demo_data"]
+# Seeder removed: demo/simulation is now frontend-only. No exports here.
+__all__ = []
