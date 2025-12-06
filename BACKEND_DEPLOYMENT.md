@@ -91,7 +91,7 @@ Before deploying in Portainer, you need to build the Docker image.
    
    | Name | Value |
    |------|-------|
-   | `POSTGRES_DB` | `vending_backpack` |
+   | `POSTGRES_DB` | `vending_db` |
    | `POSTGRES_USER` | `vending_user` |
    | `POSTGRES_PASSWORD` | `your_secure_password_here` |
    
@@ -154,7 +154,7 @@ Before deploying in Portainer, you need to build the Docker image.
    
    | Name | Value |
    |------|-------|
-   | `DATABASE_URL` | `postgresql://vending_user:your_password@vending_db:5432/vending_backpack` |
+   | `DATABASE_URL` | `postgresql://vending_user:your_password@vending_db:5432/vending_db` |
    | `ENVIRONMENT` | `production` |
    | `DEBUG` | `False` |
    
@@ -275,7 +275,7 @@ Before deploying in Portainer, you need to build the Docker image.
 3. Click **Connect** (select `/bin/sh`)
 4. Run:
    ```bash
-   pg_dump -U vending_user vending_backpack > /tmp/backup.sql
+   pg_dump -U vending_user vending_db > /tmp/backup.sql
    ```
 5. Copy file out using `docker cp` from your server
 
@@ -347,7 +347,7 @@ Before deploying in Portainer, you need to build the Docker image.
 
 | Variable | Required | Example | Description |
 |----------|----------|---------|-------------|
-| `POSTGRES_DB` | Yes | `vending_backpack` | Database name |
+| `POSTGRES_DB` | Yes | `vending_db` | Database name |
 | `POSTGRES_USER` | Yes | `vending_user` | Database user |
 | `POSTGRES_PASSWORD` | Yes | `secure_password` | Database password |
 

@@ -90,7 +90,7 @@ If you prefer more granular control, you can create each container separately.
    - Click **+ Add container**
 
 2. **Basic Configuration**
-   - **Name**: `vending_backpack_db`
+   - **Name**: `vending_db`
    - **Image**: `postgres:15-alpine`
 
 3. **Network Configuration**
@@ -103,7 +103,7 @@ If you prefer more granular control, you can create each container separately.
    
    | Name | Value |
    |------|-------|
-   | `POSTGRES_DB` | `vending_backpack` |
+   | `POSTGRES_DB` | `vending_db` |
    | `POSTGRES_USER` | `vending_user` |
    | `POSTGRES_PASSWORD` | Your secure password |
 
@@ -147,7 +147,7 @@ If you prefer more granular control, you can create each container separately.
    
    | Name | Value |
    |------|-------|
-   | `DATABASE_URL` | `postgresql://vending_user:YOUR_PASSWORD@vending_backpack_db:5432/vending_backpack` |
+   | `DATABASE_URL` | `postgresql://vending_user:YOUR_PASSWORD@vending_db:5432/vending_db` |
 
    > [!WARNING]
    > Replace `YOUR_PASSWORD` with the same password you used for the PostgreSQL container.
@@ -171,10 +171,10 @@ If you prefer more granular control, you can create each container separately.
    - Look for successful database connection messages
 
 2. **Test Database Access** (Optional)
-   - Click on `vending_backpack_db` container
+   - Click on `vending_db` container
    - Click **Console**
    - Click **Connect**
-   - Run: `psql -U vending_user -d vending_backpack`
+   - Run: `psql -U vending_user -d vending_db`
    - Type `\dt` to list tables (if migrations have run)
 
 ### Run Database Migrations
@@ -209,9 +209,9 @@ If your backend doesn't auto-migrate, you may need to run migrations manually:
 ### Backing Up the Database
 
 1. **Via Portainer Console:**
-   - Click on `vending_backpack_db` container
+   - Click on `vending_db` container
    - Click **Console** → **Connect**
-   - Run: `pg_dump -U vending_user vending_backpack > /tmp/backup.sql`
+   - Run: `pg_dump -U vending_user vending_db > /tmp/backup.sql`
    - Use **Exec Console** to copy the file out
 
 2. **Via Volume Backup:**
