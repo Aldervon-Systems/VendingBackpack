@@ -45,6 +45,20 @@ services:
     networks:
       - vending_network
 
+  frontend:
+    build:
+      # Use the v1 directory as build context so Docker can access the Flutter web build
+      context: ./v1
+      dockerfile: mock_server/Dockerfile
+    container_name: vending_frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    networks:
+      - vending_network
+    depends_on:
+      - backend
+
 volumes:
   postgres_data:
     driver: local

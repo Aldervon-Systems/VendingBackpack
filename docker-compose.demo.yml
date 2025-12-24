@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  demo_frontend:
+    build:
+      context: ./v1/mock_server
+      dockerfile: Dockerfile
+    container_name: vending_demo_frontend
+    environment:
+      - PORT=8000
+    ports:
+      - '8000:8000' # mock API on host:8000
+    volumes:
+      - ./v1/mock_server/demo_db.json:/app/demo_db.json
+
+  demo_static:
+    image: nginx:stable-alpine
+    container_name: vending_demo_static
+    depends_on:
+      - demo_frontend
+    volumes:
+      - ./v1/build/web:/usr/share/nginx/html:ro
+      - ./v1/nginx/demo_nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - '3000:80' # frontend served on host:3000
