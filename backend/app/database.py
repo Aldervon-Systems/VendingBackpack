@@ -1,20 +1,26 @@
+import logging
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from .config import settings
 
-# Create database engine
-# SQLite uses check_same_thread=False for FastAPI async compatibility
-# PostgreSQL doesn't need this parameter
-connect_args = {}
-if settings.DATABASE_URL.startswith("sqlite"):
-    connect_args = {"check_same_thread": False}
+# Configure logging
+logger = logging.getLogger(__name__)
 
-engine = create_engine(
-    settings.DATABASE_URL,
-    connect_args=connect_args,
-    echo=settings.DEBUG  # Log SQL queries in debug mode
-)
+# Create database engine
+# Smart connection string handling (SQLite needs special args)
+connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
+
+try:
+    logger.info(f"💾 Creating database engine for: {settings.DATABASE_URL.split('@')[-1] if '@' in settings.DATABASE_URL else 'HIDDEN'}")
+    engine = create_engine(
+        settings.DATABASE_URL,
+        connect_args=connect_args
+    )
+    logger.info("✅ Database engine created.")
+except Exception as e:
+    logger.error(f"❌ Failed to create database engine: {str(e)}")
+    raise
 
 # Create session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -30,3 +36,15 @@ def get_db():
         yield db
     finally:
         db.close()
+
+def init_db():
+    """Initialize database tables"""
+    try:
+        logger.info("📦 Checking/Creating database tables...")
+        # Import models here to ensure they're registered with Base before create_all
+        from . import models
+        Base.metadata.create_all(bind=engine)
+        logger.info("✅ Database initialization complete.")
+    except Exception as e:
+        logger.error(f"❌ init_db failed: {str(e)}")
+        raise

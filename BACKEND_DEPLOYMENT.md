@@ -395,6 +395,26 @@ Before deploying in Portainer, you need to build the Docker image.
 
 ---
 
+## Demo Mode (frontend) 🔧
+
+If you are using demo mode (DEMO_MODE=true) the frontend includes a small helper script that attempts to fetch the demo DB from sensible hosts and provides a cache-clear helper.
+
+Steps to ensure deployed web clients use the server demo DB:
+
+1. Make sure the mock server is running and serving `/__demo_api/_db` (default dev host: `http://127.0.0.1:8000`).
+2. The built web assets include `demo-mode.js` which will try same-origin first, then `127.0.0.1:8000` and `localhost:8000`.
+3. If your deployed site serves static assets from a different host, either:
+   - Add a small meta tag to your `index.html` or update `demo-mode.js` to include your deployed demo API host, or
+   - Configure your webserver to proxy `/_demo_api/` to the demo API host so the client can use the relative path `/__demo_api/_db`.
+4. When testing, clear client caches (localStorage and service worker caches) and reload the page. You can also use the helper exposed on the page by calling `window.demoMode.clearDemoCache()` in the browser console or visiting `/__demo_api/clear_demo_cache`.
+
+Tips:
+- To re-generate the demo DB locally run: `python3 v1/mock_server/generate_demo_db.py` (this writes `v1/mock_server/demo_db.json`).
+- After changing `demo-mode.js`, rebuild and redeploy your static assets (e.g., `flutter build web`) so clients pick up the new script.
+
+
+---
+
 ## Support
 
 For issues:
