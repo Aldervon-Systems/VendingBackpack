@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: vending_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: vending
+      POSTGRES_USER: vending_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - vending_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U vending_user -d vending" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vending_backpack_backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      DATABASE_URL: postgresql://vending_user:${DB_PASSWORD}@postgres:5432/vending
+      DEMO_MODE: ${DEMO_MODE:-false}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      DEBUG: ${DEBUG:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - vending_network
+
+  frontend:
+    build:
+      context: ./v1
+      dockerfile: Dockerfile
+    container_name: vending_frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    networks:
+      - vending_network
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  vending_network:
+    driver: bridge
