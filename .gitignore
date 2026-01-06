@@ -49,3 +49,4 @@ fp-info-cache
 
 # dev artifacts
 .vscode
+.DS_Store
