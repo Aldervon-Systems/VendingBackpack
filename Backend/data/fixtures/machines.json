@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "name": "Downtown Lobby",
+    "location": "Boston Common",
+    "is_online": true,
+    "created_at": "2024-09-01T00:00:00Z",
+    "updated_at": "2025-02-10T12:00:00Z"
+  },
+  {
+    "id": 2,
+    "name": "South Station Platform",
+    "location": "South Station",
+    "is_online": true,
+    "created_at": "2024-09-05T00:00:00Z",
+    "updated_at": "2025-02-12T09:30:00Z"
+  },
+  {
+    "id": 3,
+    "name": "Seaport Office",
+    "location": "Seaport District",
+    "is_online": true,
+    "created_at": "2024-09-10T00:00:00Z",
+    "updated_at": "2025-02-11T18:40:00Z"
+  },
+  {
+    "id": 4,
+    "name": "TD Garden Gate 2",
+    "location": "TD Garden",
+    "is_online": true,
+    "created_at": "2024-09-12T00:00:00Z",
+    "updated_at": "2025-02-14T14:05:00Z"
+  },
+  {
+    "id": 5,
+    "name": "Fenway Concourse",
+    "location": "Fenway Park",
+    "is_online": false,
+    "created_at": "2024-09-15T00:00:00Z",
+    "updated_at": "2025-02-20T16:45:00Z"
+  },
+  {
+    "id": 6,
+    "name": "Kendall Lobby",
+    "location": "MIT (Kendall Sq.)",
+    "is_online": true,
+    "created_at": "2024-09-20T00:00:00Z",
+    "updated_at": "2025-02-19T10:15:00Z"
+  },
+  {
+    "id": 7,
+    "name": "Logan Terminal A",
+    "location": "Logan Terminal A",
+    "is_online": true,
+    "created_at": "2024-10-01T00:00:00Z",
+    "updated_at": "2025-02-18T08:20:00Z"
+  },
+  {
+    "id": 8,
+    "name": "Harvard Square Kiosk",
+    "location": "Harvard (Harvard Sq.)",
+    "is_online": true,
+    "created_at": "2024-10-05T00:00:00Z",
+    "updated_at": "2025-02-16T11:55:00Z"
+  },
+  {
+    "id": 9,
+    "name": "Davis Square Hub",
+    "location": "Somerville (Davis Sq.)",
+    "is_online": true,
+    "created_at": "2024-10-10T00:00:00Z",
+    "updated_at": "2025-02-22T13:10:00Z"
+  },
+  {
+    "id": 10,
+    "name": "Quincy Center Station",
+    "location": "Quincy Center",
+    "is_online": true,
+    "created_at": "2024-10-12T00:00:00Z",
+    "updated_at": "2025-02-21T15:25:00Z"
+  }
+]

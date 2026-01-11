@@ -19,7 +19,7 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: ./Backend_Deprecated
       dockerfile: Dockerfile
     container_name: vending_backpack_backend
     restart: unless-stopped
@@ -37,17 +37,22 @@ services:
       - vending_network
 
   frontend:
-    build:
-      context: ./v1
-      dockerfile: Dockerfile
+    image: nginx:stable-alpine
     container_name: vending_frontend
     restart: unless-stopped
+    environment:
+      API_SCHEME: ${API_SCHEME:-http}
+      API_PRIMARY_HOST: ${API_PRIMARY_HOST:-backend:8080}
+      API_FALLBACK_HOST: ${API_FALLBACK_HOST:-backend:8080}
     ports:
       - "${FRONTEND_PORT:-80}:80"
     networks:
       - vending_network
     depends_on:
       - backend
+    volumes:
+      - ./Frontend_Deprecated/build/web:/usr/share/nginx/html:ro
+      - ./Frontend_Deprecated/nginx/default.conf:/etc/nginx/templates/default.conf.template:ro
 
 volumes:
   postgres_data:

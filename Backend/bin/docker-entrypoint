@@ -1,0 +1,13 @@
+#!/bin/bash -e
+
+# If running the rails server then create or migrate existing database.
+# Fixture-backed API runs without ActiveRecord; only prepare the DB when enabled.
+if [ "${1}" == "./bin/rails" ] && [ "${2}" == "server" ]; then
+  if [ "${ENABLE_DATABASE:-false}" = "true" ]; then
+    ./bin/rails db:prepare
+  else
+    echo "Skipping db:prepare (ENABLE_DATABASE != true)"
+  fi
+fi
+
+exec "${@}"

@@ -1,0 +1,30 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+*.egg-info/
+dist/
+build/
+.env
+*.db
+*.sqlite
+*.sqlite3
+.DS_Store
+.vscode/
+.idea/
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+*.log
+
+# Temp
+*.tmp
+*.bak
+*~

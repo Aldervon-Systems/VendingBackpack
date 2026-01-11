@@ -1,0 +1,56 @@
+[
+  {
+    "id": 1,
+    "employee_id": "amanda_jones",
+    "employee_name": "Amanda Jones",
+    "distance_meters": 8200,
+    "duration_seconds": 4200,
+    "stops": [
+      {"id": "M-101", "name": "Boston Common", "lat": 42.3550, "lng": -71.0656},
+      {"id": "M-102", "name": "South Station", "lat": 42.3523, "lng": -71.0552},
+      {"id": "M-104", "name": "TD Garden", "lat": 42.3662, "lng": -71.0621},
+      {"id": "M-107", "name": "Back Bay (Copley)", "lat": 42.3493, "lng": -71.0780}
+    ],
+    "created_at": "2025-02-20T15:30:00Z"
+  },
+  {
+    "id": 2,
+    "employee_id": "diego_ramirez",
+    "employee_name": "Diego Ramirez",
+    "distance_meters": 10200,
+    "duration_seconds": 5100,
+    "stops": [
+      {"id": "M-103", "name": "Seaport District", "lat": 42.3521, "lng": -71.0426},
+      {"id": "M-117", "name": "Seaport (Pier 4)", "lat": 42.3519, "lng": -71.0459},
+      {"id": "M-109", "name": "Logan Terminal A", "lat": 42.3664, "lng": -71.0200},
+      {"id": "M-118", "name": "East Boston (Maverick)", "lat": 42.3689, "lng": -71.0390}
+    ],
+    "created_at": "2025-02-20T15:35:00Z"
+  },
+  {
+    "id": 3,
+    "employee_id": "chloe_nguyen",
+    "employee_name": "Chloe Nguyen",
+    "distance_meters": 7400,
+    "duration_seconds": 3900,
+    "stops": [
+      {"id": "M-106", "name": "Fenway Park", "lat": 42.3467, "lng": -71.0972},
+      {"id": "M-116", "name": "Longwood Medical", "lat": 42.3363, "lng": -71.1058},
+      {"id": "M-115", "name": "Brookline (Coolidge Corner)", "lat": 42.3432, "lng": -71.1213}
+    ],
+    "created_at": "2025-02-20T15:40:00Z"
+  },
+  {
+    "id": 4,
+    "employee_id": "maya_patel",
+    "employee_name": "Maya Patel",
+    "distance_meters": 6800,
+    "duration_seconds": 3600,
+    "stops": [
+      {"id": "M-111", "name": "Somerville (Davis Sq.)", "lat": 42.3967, "lng": -71.1218},
+      {"id": "M-112", "name": "Somerville (Assembly)", "lat": 42.3929, "lng": -71.0777},
+      {"id": "M-114", "name": "Cambridge (Porter Sq.)", "lat": 42.3884, "lng": -71.1191}
+    ],
+    "created_at": "2025-02-20T15:45:00Z"
+  }
+]

@@ -1,0 +1,42 @@
+import 'package:flutter/material.dart';
+import 'MetricCard.dart';
+
+class DashboardMetrics extends StatelessWidget {
+  final int totalMachines;
+  final int onlineMachines;
+  final double revenueToday;
+
+  const DashboardMetrics({
+    super.key,
+    required this.totalMachines,
+    required this.onlineMachines,
+    required this.revenueToday,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        MetricCard(
+          label: 'Total Machines',
+          value: totalMachines.toString(),
+          icon: Icons.devices,
+        ),
+        MetricCard(
+          label: 'Online',
+          value: onlineMachines.toString(),
+          icon: Icons.wifi,
+          color: Colors.green,
+        ),
+        MetricCard(
+          label: 'Revenue Today',
+          value: '\$${revenueToday.toStringAsFixed(2)}',
+          icon: Icons.attach_money,
+          color: Colors.blue,
+        ),
+      ],
+    );
+  }
+}

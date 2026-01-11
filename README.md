@@ -35,3 +35,7 @@ git submodule update --init --recursive
 ## Project Layout
 
 If you want to use this project template for yourself, you can find it [here!](https://github.com/KenwoodFox/Project-Template)
+
+## Software Development
+
+See `Docs/DEV_SETUP.md` for Flutter SDK requirements and how to run the deprecated and new stacks.

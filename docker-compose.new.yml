@@ -1,0 +1,29 @@
+services:
+  backend_new:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: vending_backend_new
+    restart: unless-stopped
+    environment:
+      RAILS_ENV: development
+      PORT: 9090
+      BINDING: 0.0.0.0
+    ports:
+      - "${BACKEND_NEW_PORT:-9090}:9090"
+
+  frontend_new:
+    image: nginx:stable-alpine
+    container_name: vending_frontend_new
+    restart: unless-stopped
+    environment:
+      API_SCHEME: ${API_SCHEME:-http}
+      API_PRIMARY_HOST: ${API_PRIMARY_HOST:-backend_new:9090}
+      API_FALLBACK_HOST: ${API_FALLBACK_HOST:-backend_new:9090}
+    ports:
+      - "${FRONTEND_NEW_PORT:-8082}:80"
+    depends_on:
+      - backend_new
+    volumes:
+      - ./deploy/frontend:/usr/share/nginx/html:ro
+      - ./Frontend/nginx/default.conf:/etc/nginx/templates/default.conf.template:ro
