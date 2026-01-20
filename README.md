@@ -44,6 +44,8 @@ The new stack is intended to be an end-to-end demo using:
 ./Frontend/scripts/build_web.sh
 ```
 
+If the UI doesn’t change after rebuilding, do a hard refresh (or clear the site data) — Flutter web can be cached via a service worker.
+
 2) Start the stack:
 
 ```bash

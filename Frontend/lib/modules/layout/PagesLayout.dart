@@ -151,7 +151,9 @@ class _PagesLayoutState extends State<PagesLayout> {
           if (showSettingsOverlay)
             _SettingsOverlay(
               onClose: () => setState(() => showSettingsOverlay = false),
-              child: const SettingsMenu(),
+              child: SettingsMenu(
+                onClose: () => setState(() => showSettingsOverlay = false),
+              ),
             ),
         ],
       ),
