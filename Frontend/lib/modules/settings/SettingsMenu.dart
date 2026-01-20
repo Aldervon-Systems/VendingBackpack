@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import '../auth/SessionManager.dart';
 
 class SettingsMenu extends StatelessWidget {
-  const SettingsMenu({super.key});
+  final VoidCallback? onClose;
+
+  const SettingsMenu({super.key, this.onClose});
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +34,7 @@ class SettingsMenu extends StatelessWidget {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                onPressed: () => Navigator.of(context).maybePop(),
+                onPressed: onClose ?? () => Navigator.of(context).maybePop(),
                 child: const Text('Close'),
               ),
             ),

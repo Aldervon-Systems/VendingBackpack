@@ -28,12 +28,12 @@ New frontend output (copied to `deploy/frontend`):
 
 Deprecated stack (FastAPI + Frontend_Deprecated):
 ```
-docker compose -f docker-compose.yml up -d
+docker compose -f docker-compose-deprecated.yml up -d
 ```
 
 New stack (Rails + Frontend):
 ```
-docker compose -f docker-compose.new.yml up -d
+docker compose -f docker-compose.yml up -d
 ```
 
 Run both stacks in order (backends first, then frontends):
@@ -60,7 +60,7 @@ Override for public + demo:
 API_SCHEME=https \
 API_PRIMARY_HOST=api.example.com \
 API_FALLBACK_HOST=demo-api.example.com \
-docker compose -f docker-compose.new.yml up -d
+docker compose -f docker-compose.yml up -d
 ```
 
 ## Demo logins

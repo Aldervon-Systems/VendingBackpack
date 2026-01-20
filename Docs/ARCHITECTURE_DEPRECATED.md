@@ -3,7 +3,7 @@
 This is a one-page, module-based overview with pillar-style sections so a junior dev can extend the project safely.
 
 Pillar 1: Runtime and Docker
-- docker-compose.yml runs three services: postgres (DB), backend (FastAPI), frontend (Nginx + Flutter web).
+- docker-compose-deprecated.yml runs three services: postgres (DB), backend (FastAPI), frontend (Nginx + Flutter web).
 - Backend container exposes port 8080 and connects to postgres via DATABASE_URL.
 - Frontend container serves Frontend_Deprecated/build/web and proxies /api/* and /health to backend:8080.
 - Build note: Frontend_Deprecated/Dockerfile assumes build/web already exists (run flutter build web before building the image).

@@ -3,7 +3,7 @@ services:
     build:
       context: ./Backend
       dockerfile: Dockerfile
-    container_name: vending_backend_new
+    container_name: vending_backend
     restart: unless-stopped
     environment:
       RAILS_ENV: development
