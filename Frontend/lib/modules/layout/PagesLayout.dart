@@ -30,18 +30,13 @@ class _PagesLayoutState extends State<PagesLayout> {
   List<_TabSpec> _buildTabs(SessionManager session) {
     final tabs = <_TabSpec>[];
 
-    if (session.effectiveRole == 'manager') {
-      tabs.add(
-        _TabSpec(
-          label: 'Dashboard',
-          icon: Icons.dashboard,
-          page: ChangeNotifierProvider(
-            create: (_) => BusinessMetrics()..loadData(),
-            child: const DashboardHome(),
-          ),
-        ),
-      );
-    }
+    tabs.add(
+      const _TabSpec(
+        label: 'Dashboard',
+        icon: Icons.dashboard,
+        page: DashboardHome(),
+      ),
+    );
 
     tabs.addAll([
       const _TabSpec(label: 'Routes', icon: Icons.alt_route, page: MapInterface()),

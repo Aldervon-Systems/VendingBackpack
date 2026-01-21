@@ -23,14 +23,34 @@ module Fixtures
         @employee_routes ||= load_json("employee_routes.json", [])
       end
 
+      def inventory
+        @inventory ||= load_json("inventory.json", {})
+      end
+
+      def update_inventory_item(machine_id, sku, new_qty)
+        return unless inventory[machine_id]
+        item = inventory[machine_id].find { |i| i["sku"] == sku }
+        if item
+          item["qty"] = new_qty
+        end
+      end
+
+      def update_route(route)
+        idx = employee_routes.index { |r| r["id"] == route["id"] }
+        if idx
+          employee_routes[idx] = route
+        else
+          employee_routes << route
+        end
+      end
+
       def reset!
         @items = nil
         @transactions = nil
         @machines = nil
         @employee_routes = nil
+        @inventory = nil
       end
-
-      private
 
       def load_json(name, fallback)
         path = FIXTURES_DIR.join(name)
@@ -40,6 +60,8 @@ module Fixtures
       rescue JSON::ParserError
         fallback
       end
+
+      private
     end
   end
 end

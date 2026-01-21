@@ -5,12 +5,14 @@ class DashboardMetrics extends StatelessWidget {
   final int totalMachines;
   final int onlineMachines;
   final double revenueToday;
+  final bool showRevenue;
 
   const DashboardMetrics({
     super.key,
     required this.totalMachines,
     required this.onlineMachines,
     required this.revenueToday,
+    this.showRevenue = true,
   });
 
   @override
@@ -30,6 +32,7 @@ class DashboardMetrics extends StatelessWidget {
           icon: Icons.wifi,
           color: Colors.green,
         ),
+        if (showRevenue)
         MetricCard(
           label: 'Revenue Today',
           value: '\$${revenueToday.toStringAsFixed(2)}',

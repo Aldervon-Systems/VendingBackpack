@@ -31,6 +31,10 @@ RUN bundle install && \
 # Copy application code
 COPY . .
 
+# Ensure scripts use Unix line endings to avoid CRLF shebang issues on Windows
+# (fixes errors like: env: ‘ruby\r’: No such file or directory)
+RUN find ./bin -type f -print0 | xargs -0 sed -i 's/\r$//' || true
+
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
 

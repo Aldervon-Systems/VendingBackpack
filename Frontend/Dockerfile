@@ -1,6 +1,6 @@
 # Multi-stage: build Flutter web, then serve it with nginx.
 
-FROM instrumentisto/flutter:stable AS build
+FROM ghcr.io/cirruslabs/flutter:stable AS build
 WORKDIR /app
 
 COPY pubspec.yaml pubspec.lock* ./
@@ -17,5 +17,5 @@ RUN flutter build web --release
 RUN mkdir -p /Deploy/frontend && cp -R build/web/* /Deploy/frontend/
 
 FROM nginx:stable-alpine
-COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY nginx/default.conf /etc/nginx/templates/default.conf.template
 COPY --from=build /Deploy/frontend/ /usr/share/nginx/html/

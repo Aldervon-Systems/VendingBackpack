@@ -11,7 +11,7 @@ module Fixtures
     end
 
     def employees
-      @store.read_json("employees.json")
+      Fixtures::MutableStore.load_json("employees.json", [])
     end
 
     def locations
@@ -19,7 +19,7 @@ module Fixtures
     end
 
     def warehouse_inventory
-      @store.read_json("inventory.json")
+      Fixtures::MutableStore.inventory
     end
 
     def daily_stats

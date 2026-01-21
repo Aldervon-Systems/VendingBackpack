@@ -13,7 +13,9 @@ services:
       - "${BACKEND_NEW_PORT:-9090}:9090"
 
   frontend_new:
-    image: nginx:stable-alpine
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
     container_name: vending_frontend_new
     restart: unless-stopped
     environment:
@@ -24,6 +26,5 @@ services:
       - "${FRONTEND_NEW_PORT:-8082}:80"
     depends_on:
       - backend_new
-    volumes:
-      - ./deploy/frontend:/usr/share/nginx/html:ro
-      - ./Frontend/nginx/default.conf:/etc/nginx/templates/default.conf.template:ro
+    # volumes:
+    #   - ./Frontend/nginx/default.conf:/etc/nginx/templates/default.conf.template:ro

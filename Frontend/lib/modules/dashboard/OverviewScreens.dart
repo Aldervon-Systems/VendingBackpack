@@ -132,7 +132,7 @@ class _DashboardHome extends StatelessWidget {
           return MachineStopCard(
             machineId: mid,
             machineName: 'Machine $mid', // We could fetch real names later
-            itemCount: items.length,
+            items: items,
             isOnline: true,
           );
         }),

@@ -14,5 +14,14 @@ module Api
     def daily_stats
       render json: Fixtures::MockApi.new.daily_stats
     end
+
+    def update_inventory
+      machine_id = params[:machine_id]
+      sku = params[:sku]
+      new_qty = params[:quantity].to_i
+
+      Fixtures::MutableStore.update_inventory_item(machine_id, sku, new_qty)
+      render json: { status: "success", machine_id: machine_id, sku: sku, quantity: new_qty }
+    end
   end
 end

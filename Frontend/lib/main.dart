@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'modules/auth/SessionManager.dart';
 import 'modules/auth/AccessScreens.dart';
 import 'modules/layout/PagesLayout.dart';
+import 'modules/dashboard/BusinessMetrics.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,6 +17,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => SessionManager()),
+        ChangeNotifierProvider(create: (_) => BusinessMetrics()),
       ],
       child: MaterialApp(
         title: 'VendingBackpack',

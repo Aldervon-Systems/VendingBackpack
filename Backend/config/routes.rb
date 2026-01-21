@@ -6,6 +6,7 @@ Rails.application.routes.draw do
     post "/token", to: "api/auth#token"
 
     get "/warehouse", to: "api/warehouse#warehouse"
+    post "/warehouse/update", to: "api/warehouse#update_inventory"
     get "/daily_stats", to: "api/warehouse#daily_stats"
 
     get "/items", to: "api/items#index"
@@ -28,6 +29,8 @@ Rails.application.routes.draw do
     get "/employees", to: "api/routes#employees"
     get "/employees/routes", to: "api/employees#routes_index"
     get "/employees/:id/routes", to: "api/employees#routes_for"
+    post "/employees/:id/routes/assign", to: "api/employees#assign_route"
+    put "/employees/:id/routes/stops", to: "api/employees#update_stops"
     get "/employees/:id", to: "api/employees#show"
   end
 end

@@ -37,6 +37,19 @@ class ApiClient {
     }
   }
 
+  Future<dynamic> put(String endpoint, Map<String, dynamic> body) async {
+    final response = await client.put(
+      Uri.parse(_buildUrl(endpoint)),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
+     if (response.statusCode >= 200 && response.statusCode < 300) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to put data: ${response.statusCode}');
+    }
+  }
+
   String _buildUrl(String endpoint) {
     final normalizedEndpoint = endpoint.startsWith('/') ? endpoint : '/$endpoint';
     final normalizedBase = baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;

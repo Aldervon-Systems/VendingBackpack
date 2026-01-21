@@ -47,4 +47,46 @@ class BusinessMetrics extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // --- Employee Specific Logic ---
+  List<String> _userMachineIds = [];
+  List<String> get userMachineIds => _userMachineIds;
+
+  Future<void> fetchUserRoute(String userId) async {
+    try {
+      final routeData = await _api.get('/employees/$userId/routes');
+      if (routeData is Map && routeData['stops'] is List) {
+        _userMachineIds = (routeData['stops'] as List).map((s) => s['id'].toString()).toList();
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error fetching user route: $e');
+    }
+  }
+
+  Future<void> updateItemQuantity(String machineId, String sku, int newQty) async {
+    try {
+      // Optimistic update locally
+      if (_inventory.containsKey(machineId)) {
+        final items = _inventory[machineId]!;
+        for (var item in items) {
+          if (item['sku'] == sku) {
+            item['qty'] = newQty;
+            break;
+          }
+        }
+      }
+      notifyListeners();
+
+      // API Call
+      await _api.post('/warehouse/update', {
+        'machine_id': machineId,
+        'sku': sku,
+        'quantity': newQty,
+      });
+      
+    } catch (e) {
+      debugPrint('Error updating item qty: $e');
+    }
+  }
 }

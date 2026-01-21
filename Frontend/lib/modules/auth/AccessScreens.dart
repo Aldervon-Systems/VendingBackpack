@@ -10,8 +10,8 @@ class AccessScreens extends StatefulWidget {
 }
 
 class _AccessScreensState extends State<AccessScreens> {
-  final _emailController = TextEditingController(text: 'Simon.swartout@gmail.com');
-  final _passwordController = TextEditingController(text: 'test123');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _isLoading = false;
   String? _error;
 
