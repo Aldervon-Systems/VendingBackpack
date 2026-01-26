@@ -1,5 +1,6 @@
 services:
   backend_new:
+    image: ghcr.io/aldervon-systems/vendingbackpack/backend:latest
     build:
       context: ./Backend
       dockerfile: Dockerfile
@@ -13,6 +14,7 @@ services:
       - "${BACKEND_NEW_PORT:-9090}:9090"
 
   frontend_new:
+    image: ghcr.io/aldervon-systems/vendingbackpack/frontend:latest
     build:
       context: ./Frontend
       dockerfile: Dockerfile

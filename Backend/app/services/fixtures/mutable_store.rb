@@ -50,6 +50,21 @@ module Fixtures
         @machines = nil
         @employee_routes = nil
         @inventory = nil
+        @users = nil
+      end
+
+      def users
+        @users ||= load_json("users.json", [])
+      end
+
+      def add_user(user_data)
+        users << user_data
+        save_json("users.json", users)
+      end
+
+      def save_json(name, data)
+        path = FIXTURES_DIR.join(name)
+        File.write(path, JSON.pretty_generate(data))
       end
 
       def load_json(name, fallback)

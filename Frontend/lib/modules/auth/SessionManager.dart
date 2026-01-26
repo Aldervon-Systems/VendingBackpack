@@ -86,6 +86,33 @@ class SessionManager extends ChangeNotifier {
     }
   }
 
+  Future<void> signup(String name, String email, String password) async {
+    try {
+      final response = await _api.post('/signup', {
+        'name': name,
+        'email': email,
+        'password': password,
+      });
+      
+      final userData = response['user'];
+      _currentUser = User.fromJson(userData);
+      _isAuthenticated = true;
+      _roleOverride = null;
+
+      debugPrint('[Session] Signup Success: ${_currentUser?.name}');
+
+      // Persist session
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_userKey, jsonEncode(_currentUser!.toJson()));
+      await prefs.setInt(_timeKey, DateTime.now().millisecondsSinceEpoch);
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Signup failed: $e');
+      rethrow;
+    }
+  }
+
   void setEmployeeView(bool enabled) {
     if (!isManager) {
       if (_roleOverride != null) {

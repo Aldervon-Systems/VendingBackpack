@@ -6,6 +6,7 @@ import 'modules/layout/PagesLayout.dart';
 import 'modules/dashboard/BusinessMetrics.dart';
 
 void main() {
+  // Build version 1.0.1 - Adding signup button
   runApp(const MyApp());
 }
 

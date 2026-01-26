@@ -40,7 +40,7 @@ module Fixtures
     private
 
     def users
-      @store.read_json("users.json")
+      Fixtures::MutableStore.users
     end
   end
 end

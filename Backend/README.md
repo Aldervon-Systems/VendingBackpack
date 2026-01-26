@@ -1,24 +1,12 @@
-# README
+# Vending Backpack Backend
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+This is the Ruby on Rails backend for the Vending Backpack project.
 
-Things you may want to cover:
+## API Documentation
 
-* Ruby version
+For detailed information on the API endpoints and how to use them, please refer to:
+[Backend API Documentation](../Docs/BACKEND_API.md)
 
-* System dependencies
+## Getting Started
 
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+...

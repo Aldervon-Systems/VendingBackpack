@@ -33,7 +33,8 @@ class ApiClient {
      if (response.statusCode >= 200 && response.statusCode < 300) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Failed to post data: ${response.statusCode}');
+      final detail = _parseError(response);
+      throw Exception(detail);
     }
   }
 
@@ -46,7 +47,17 @@ class ApiClient {
      if (response.statusCode >= 200 && response.statusCode < 300) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Failed to put data: ${response.statusCode}');
+      final detail = _parseError(response);
+      throw Exception(detail);
+    }
+  }
+
+  String _parseError(http.Response response) {
+    try {
+      final data = jsonDecode(response.body);
+      return data['detail'] ?? data['error'] ?? 'Server error: ${response.statusCode}';
+    } catch (_) {
+      return 'Server error: ${response.statusCode}';
     }
   }
 
