@@ -4,9 +4,10 @@ import 'modules/auth/SessionManager.dart';
 import 'modules/auth/AccessScreens.dart';
 import 'modules/layout/PagesLayout.dart';
 import 'modules/dashboard/BusinessMetrics.dart';
+import 'core/styles/AppStyle.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() {
-  // Build version 1.0.1 - Adding signup button
   runApp(const MyApp());
 }
 
@@ -22,34 +23,39 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'VendingBackpack',
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          brightness: Brightness.light,
-          colorScheme: const ColorScheme.light(
-            surface: Colors.white,
-            primary: Colors.black,
-            onPrimary: Colors.white,
-            secondary: Colors.black,
-            onSecondary: Colors.white,
-          ),
-          scaffoldBackgroundColor: Colors.white,
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-            elevation: 0,
-          ),
-          textTheme: const TextTheme(
-            headlineMedium: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'serif',
-              letterSpacing: 0.5,
-            ),
-            bodyMedium: TextStyle(color: Colors.black, fontFamily: 'serif'),
-          ),
-          dividerColor: Colors.black12,
-          iconTheme: const IconThemeData(color: Colors.black),
-          fontFamily: 'serif',
           useMaterial3: true,
+          brightness: Brightness.light,
+          scaffoldBackgroundColor: AppColors.foundation,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: AppColors.actionAccent,
+            surface: AppColors.surface,
+            background: AppColors.foundation,
+          ),
+          textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme).copyWith(
+            displayLarge: AppStyle.metric(fontSize: 32, fontWeight: FontWeight.bold),
+            headlineMedium: AppStyle.metric(fontSize: 24, fontWeight: FontWeight.w600),
+            bodyMedium: AppStyle.label(fontSize: 14, color: AppColors.dataPrimary),
+            bodySmall: AppStyle.label(fontSize: 12),
+          ),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.transparent,
+            foregroundColor: AppColors.dataPrimary,
+            elevation: 0,
+            centerTitle: false,
+            titleTextStyle: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.dataPrimary,
+            ),
+          ),
+          dividerTheme: const DividerThemeData(
+            color: AppColors.border,
+            thickness: 1,
+            space: 1,
+          ),
         ),
         home: const AuthWrapper(),
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'SessionManager.dart';
 import 'package:provider/provider.dart';
+import '../../core/styles/AppStyle.dart';
 
 class AccessScreens extends StatefulWidget {
   const AccessScreens({super.key});
@@ -15,6 +16,7 @@ class _AccessScreensState extends State<AccessScreens> {
   final _nameController = TextEditingController();
   bool _isLoading = false;
   bool _isLoginMode = true;
+  String _selectedRole = 'employee';
   String? _error;
 
   Future<void> _handleSubmit() async {
@@ -34,18 +36,19 @@ class _AccessScreensState extends State<AccessScreens> {
           _nameController.text,
           _emailController.text,
           _passwordController.text,
+          role: _selectedRole,
         );
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         String message = e.toString().replaceFirst('Exception: ', '');
         if (message.contains('User already exists')) {
-          _error = 'An account with this email already exists.';
+          _error = 'Account exists';
         } else if (message.contains('Invalid credentials')) {
-          _error = 'Incorrect email or password.';
+          _error = 'Invalid credentials';
         } else {
-          _error = 'Server error. Please try again later.';
-          debugPrint('Auth Error: $e');
+          _error = 'Server error';
         }
       });
     } finally {
@@ -56,113 +59,106 @@ class _AccessScreensState extends State<AccessScreens> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.foundation,
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(32),
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 400),
+            constraints: const BoxConstraints(maxWidth: 380),
+            padding: const EdgeInsets.all(40),
+            decoration: AppStyle.surfaceCard,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.local_shipping, size: 64, color: Colors.blue),
-                const SizedBox(height: 16),
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.dataPrimary,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.bolt, color: Colors.white, size: 28),
+                ),
+                const SizedBox(height: 24),
                 Text(
-                  'VBP VERSION 2.0',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade900,
+                  _isLoginMode ? 'Sign In' : 'Register',
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.dataPrimary,
+                    letterSpacing: -0.5,
                   ),
                 ),
                 Text(
-                  _isLoginMode ? 'Please sign in to continue' : 'Create your account',
-                  style: const TextStyle(color: Colors.grey),
+                  'Access the VBP Lab Environment',
+                  style: AppStyle.label(fontSize: 14),
                 ),
                 const SizedBox(height: 32),
                 if (!_isLoginMode) ...[
-                  TextField(
+                  _LabTextField(
                     controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Full Name',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.person),
-                    ),
+                    label: 'FULL NAME',
+                  ),
+                  const SizedBox(height: 16),
+                  _LabDropdown(
+                    value: _selectedRole,
+                    label: 'ACCOUNT TYPE',
+                    items: const [
+                      DropdownMenuItem(value: 'employee', child: Text('Employee')),
+                      DropdownMenuItem(value: 'manager', child: Text('Manager')),
+                    ],
+                    onChanged: (v) => setState(() => _selectedRole = v!),
                   ),
                   const SizedBox(height: 16),
                 ],
-                TextField(
+                _LabTextField(
                   controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email Address',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.email),
-                  ),
+                  label: 'EMAIL ADDRESS',
                   keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 16),
-                TextField(
+                _LabTextField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock),
-                  ),
+                  label: 'PASSWORD',
                   obscureText: true,
                 ),
-                const SizedBox(height: 24),
                 if (_error != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.shade200),
-                    ),
-                    child: Text(_error!, style: const TextStyle(color: Colors.red)),
-                  ),
                   const SizedBox(height: 16),
+                  Text(
+                    _error!.toUpperCase(),
+                    style: AppStyle.label(color: AppColors.warning, fontWeight: FontWeight.bold),
+                  ),
                 ],
+                const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
-                  height: 54,
+                  height: 48,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade700,
+                      backgroundColor: AppColors.actionAccent,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                     ),
                     onPressed: _isLoading ? null : _handleSubmit,
                     child: _isLoading 
-                      ? const CircularProgressIndicator(color: Colors.white) 
-                      : Text(_isLoginMode ? 'Sign In' : 'Register Now', style: const TextStyle(fontSize: 18)),
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
+                      : Text(_isLoginMode ? 'AUTHENTICATE' : 'INITIALIZE ACCOUNT', style: AppStyle.label(color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(height: 24),
-                Row(
-                  children: const [
-                    Expanded(child: Divider()),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Text("OR", style: TextStyle(color: Colors.grey)),
-                    ),
-                    Expanded(child: Divider()),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.blue.shade700),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
+                Center(
+                  child: TextButton(
                     onPressed: () => setState(() {
                       _isLoginMode = !_isLoginMode;
                       _error = null;
                     }),
-                    child: Text(_isLoginMode ? 'CREATE NEW ACCOUNT' : 'BACK TO LOGIN'),
+                    child: Text(
+                      _isLoginMode ? 'CREATE NEW ACCOUNT' : 'BACK TO SIGN IN',
+                      style: AppStyle.label(color: AppColors.dataSecondary, decoration: TextDecoration.underline),
+                    ),
                   ),
                 ),
               ],
@@ -170,6 +166,100 @@ class _AccessScreensState extends State<AccessScreens> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _LabTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final bool obscureText;
+  final TextInputType? keyboardType;
+
+  const _LabTextField({
+    required this.controller,
+    required this.label,
+    this.obscureText = false,
+    this.keyboardType,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: AppStyle.label(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.0)),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.foundation,
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: const BorderSide(color: AppColors.actionAccent, width: 1.5),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LabDropdown extends StatelessWidget {
+  final String value;
+  final String label;
+  final List<DropdownMenuItem<String>> items;
+  final ValueChanged<String?> onChanged;
+
+  const _LabDropdown({
+    required this.value,
+    required this.label,
+    required this.items,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: AppStyle.label(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.0)),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          value: value,
+          onChanged: onChanged,
+          items: items,
+          style: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.dataPrimary),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.foundation,
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

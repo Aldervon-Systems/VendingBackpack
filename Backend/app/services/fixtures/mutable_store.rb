@@ -26,6 +26,14 @@ module Fixtures
       def inventory
         @inventory ||= load_json("inventory.json", {})
       end
+      
+      def central_stock
+        @central_stock ||= load_json("central_stock.json", [])
+      end
+
+      def shipments
+        @shipments ||= load_json("shipments.json", [])
+      end
 
       def update_inventory_item(machine_id, sku, new_qty)
         return unless inventory[machine_id]
@@ -33,6 +41,22 @@ module Fixtures
         if item
           item["qty"] = new_qty
         end
+      end
+
+      def add_to_central_stock(barcode, name, qty_to_add)
+        item = central_stock.find { |i| i["barcode"] == barcode }
+        if item
+          item["qty"] += qty_to_add
+        else
+          sku = name.to_s.downcase.gsub(' ', '_')
+          central_stock << {
+            "sku" => sku,
+            "name" => name,
+            "qty" => qty_to_add,
+            "barcode" => barcode
+          }
+        end
+        save_json("central_stock.json", central_stock)
       end
 
       def update_route(route)
@@ -51,6 +75,8 @@ module Fixtures
         @employee_routes = nil
         @inventory = nil
         @users = nil
+        @central_stock = nil
+        @shipments = nil
       end
 
       def users

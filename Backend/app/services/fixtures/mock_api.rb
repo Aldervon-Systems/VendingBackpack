@@ -19,7 +19,7 @@ module Fixtures
     end
 
     def warehouse_inventory
-      Fixtures::MutableStore.inventory
+      Fixtures::MutableStore.central_stock
     end
 
     def daily_stats
@@ -27,14 +27,7 @@ module Fixtures
     end
 
     def find_item_by_barcode(barcode)
-      warehouse_inventory.each_value do |items|
-        next unless items.is_a?(Array)
-
-        items.each do |item|
-          return item if item["barcode"] == barcode
-        end
-      end
-      {}
+      warehouse_inventory.find { |item| item["barcode"] == barcode } || {}
     end
 
     private

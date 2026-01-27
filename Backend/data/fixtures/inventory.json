@@ -1,86 +1,44 @@
 {
-  "M-101": [
-    {"sku": "coke_can", "name": "Coke", "qty": 12, "barcode": "coke_can_code"},
-    {"sku": "water_bottle", "name": "Water", "qty": 9, "barcode": "water_bottle_code"},
-    {"sku": "chips_classic", "name": "Chips", "qty": 6, "barcode": "chips_classic_code"},
-    {"sku": "granola_bar", "name": "Granola Bar", "qty": 5, "barcode": "granola_bar_code"}
+  "M-1": [
+    {
+      "sku": "coke_can",
+      "name": "Coke",
+      "qty": 10,
+      "barcode": "coke_can_code"
+    },
+    {
+      "sku": "water_bottle",
+      "name": "Water",
+      "qty": 15,
+      "barcode": "water_bottle_code"
+    }
   ],
-  "M-102": [
-    {"sku": "diet_coke_can", "name": "Diet Coke", "qty": 10, "barcode": "diet_coke_can_code"},
-    {"sku": "sparkling_water", "name": "Sparkling Water", "qty": 8, "barcode": "sparkling_water_code"},
-    {"sku": "pretzels", "name": "Pretzels", "qty": 7, "barcode": "pretzels_code"},
-    {"sku": "chocolate_bar", "name": "Chocolate Bar", "qty": 4, "barcode": "chocolate_bar_code"}
+  "M-2": [
+    {
+      "sku": "diet_coke_can",
+      "name": "Diet Coke",
+      "qty": 8,
+      "barcode": "diet_coke_can_code"
+    },
+    {
+      "sku": "chips_classic",
+      "name": "Chips",
+      "qty": 12,
+      "barcode": "chips_classic_code"
+    }
   ],
-  "M-103": [
-    {"sku": "sprite_can", "name": "Sprite", "qty": 14, "barcode": "sprite_can_code"},
-    {"sku": "energy_drink", "name": "Energy Drink", "qty": 6, "barcode": "energy_drink_code"},
-    {"sku": "chips_bbq", "name": "BBQ Chips", "qty": 5, "barcode": "chips_bbq_code"},
-    {"sku": "gummy_bears", "name": "Gummy Bears", "qty": 11, "barcode": "gummy_bears_code"}
-  ],
-  "M-104": [
-    {"sku": "coke_can", "name": "Coke", "qty": 9, "barcode": "coke_can_code"},
-    {"sku": "popcorn", "name": "Popcorn", "qty": 6, "barcode": "popcorn_code"},
-    {"sku": "protein_bar", "name": "Protein Bar", "qty": 3, "barcode": "protein_bar_code"},
-    {"sku": "water_bottle", "name": "Water", "qty": 10, "barcode": "water_bottle_code"}
-  ],
-  "M-105": [
-    {"sku": "orange_soda_can", "name": "Orange Soda", "qty": 7, "barcode": "orange_soda_code"},
-    {"sku": "sparkling_water", "name": "Sparkling Water", "qty": 9, "barcode": "sparkling_water_code"},
-    {"sku": "trail_mix", "name": "Trail Mix", "qty": 5, "barcode": "trail_mix_code"},
-    {"sku": "gum_mint", "name": "Mint Gum", "qty": 12, "barcode": "gum_mint_code"}
-  ],
-  "M-106": [
-    {"sku": "iced_tea_bottle", "name": "Iced Tea", "qty": 8, "barcode": "iced_tea_bottle_code"},
-    {"sku": "water_bottle", "name": "Water", "qty": 7, "barcode": "water_bottle_code"},
-    {"sku": "chips_classic", "name": "Chips", "qty": 5, "barcode": "chips_classic_code"},
-    {"sku": "jerky_beef", "name": "Beef Jerky", "qty": 4, "barcode": "jerky_beef_code"}
-  ],
-  "M-107": [
-    {"sku": "cold_brew_can", "name": "Cold Brew", "qty": 6, "barcode": "cold_brew_can_code"},
-    {"sku": "sparkling_water", "name": "Sparkling Water", "qty": 8, "barcode": "sparkling_water_code"},
-    {"sku": "granola_bar", "name": "Granola Bar", "qty": 6, "barcode": "granola_bar_code"},
-    {"sku": "chocolate_bar", "name": "Chocolate Bar", "qty": 3, "barcode": "chocolate_bar_code"}
-  ],
-  "M-108": [
-    {"sku": "energy_drink", "name": "Energy Drink", "qty": 7, "barcode": "energy_drink_code"},
-    {"sku": "water_bottle", "name": "Water", "qty": 8, "barcode": "water_bottle_code"},
-    {"sku": "pretzels", "name": "Pretzels", "qty": 6, "barcode": "pretzels_code"},
-    {"sku": "gummy_bears", "name": "Gummy Bears", "qty": 9, "barcode": "gummy_bears_code"}
-  ],
-  "M-109": [
-    {"sku": "coke_can", "name": "Coke", "qty": 10, "barcode": "coke_can_code"},
-    {"sku": "sprite_can", "name": "Sprite", "qty": 11, "barcode": "sprite_can_code"},
-    {"sku": "water_bottle", "name": "Water", "qty": 9, "barcode": "water_bottle_code"},
-    {"sku": "chips_bbq", "name": "BBQ Chips", "qty": 5, "barcode": "chips_bbq_code"}
-  ],
-  "M-110": [
-    {"sku": "diet_coke_can", "name": "Diet Coke", "qty": 7, "barcode": "diet_coke_can_code"},
-    {"sku": "sparkling_water", "name": "Sparkling Water", "qty": 6, "barcode": "sparkling_water_code"},
-    {"sku": "popcorn", "name": "Popcorn", "qty": 4, "barcode": "popcorn_code"},
-    {"sku": "protein_bar", "name": "Protein Bar", "qty": 6, "barcode": "protein_bar_code"}
-  ],
-  "M-111": [
-    {"sku": "orange_soda_can", "name": "Orange Soda", "qty": 6, "barcode": "orange_soda_code"},
-    {"sku": "water_bottle", "name": "Water", "qty": 10, "barcode": "water_bottle_code"},
-    {"sku": "chips_classic", "name": "Chips", "qty": 7, "barcode": "chips_classic_code"},
-    {"sku": "trail_mix", "name": "Trail Mix", "qty": 5, "barcode": "trail_mix_code"}
-  ],
-  "M-112": [
-    {"sku": "iced_tea_bottle", "name": "Iced Tea", "qty": 9, "barcode": "iced_tea_bottle_code"},
-    {"sku": "sparkling_water", "name": "Sparkling Water", "qty": 8, "barcode": "sparkling_water_code"},
-    {"sku": "pretzels", "name": "Pretzels", "qty": 6, "barcode": "pretzels_code"},
-    {"sku": "gum_mint", "name": "Mint Gum", "qty": 14, "barcode": "gum_mint_code"}
-  ],
-  "M-116": [
-    {"sku": "cold_brew_can", "name": "Cold Brew", "qty": 5, "barcode": "cold_brew_can_code"},
-    {"sku": "energy_drink", "name": "Energy Drink", "qty": 6, "barcode": "energy_drink_code"},
-    {"sku": "granola_bar", "name": "Granola Bar", "qty": 7, "barcode": "granola_bar_code"},
-    {"sku": "jerky_beef", "name": "Beef Jerky", "qty": 4, "barcode": "jerky_beef_code"}
-  ],
-  "M-120": [
-    {"sku": "coke_can", "name": "Coke", "qty": 8, "barcode": "coke_can_code"},
-    {"sku": "water_bottle", "name": "Water", "qty": 11, "barcode": "water_bottle_code"},
-    {"sku": "chips_classic", "name": "Chips", "qty": 6, "barcode": "chips_classic_code"},
-    {"sku": "chocolate_bar", "name": "Chocolate Bar", "qty": 5, "barcode": "chocolate_bar_code"}
+  "M-3": [
+    {
+      "sku": "sprite_can",
+      "name": "Sprite",
+      "qty": 11,
+      "barcode": "sprite_can_code"
+    },
+    {
+      "sku": "pretzels",
+      "name": "Pretzels",
+      "qty": 9,
+      "barcode": "pretzels_code"
+    }
   ]
 }

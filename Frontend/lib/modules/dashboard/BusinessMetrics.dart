@@ -27,7 +27,7 @@ class BusinessMetrics extends ChangeNotifier {
         _employees = emps.map((e) => Employee.fromJson(e)).toList();
       }
 
-      final inv = await _api.get('/warehouse');
+      final inv = await _api.get('/inventory');
       if (inv is Map) {
         _inventory = Map<String, List<dynamic>>.from(inv);
       }

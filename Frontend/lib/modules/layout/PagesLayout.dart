@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../auth/SessionManager.dart';
-import '../dashboard/BusinessMetrics.dart';
 import '../dashboard/DashboardHome.dart';
 import '../routes/MapInterface.dart';
 import '../settings/SettingsMenu.dart';
 import '../warehouse/StockScreens.dart';
 import '../../core/ui_kit/OverlayBlurWindow.dart';
+import '../../core/styles/AppStyle.dart';
 import 'MainContent.dart';
 import 'Sidebar.dart';
 
@@ -18,40 +18,22 @@ class PagesLayout extends StatefulWidget {
 }
 
 class _PagesLayoutState extends State<PagesLayout> {
-  double leftBannerWidth = 150;
-  double topBannerHeight = 80;
+  double leftBannerWidth = 240;
   int selectedPage = 0;
-  bool sidebarExpanded = true;
-  bool menuExpanded = false;
   bool showSettingsOverlay = false;
 
-  bool get isMobile => MediaQuery.of(context).size.width < 600;
+  bool get isMobile => MediaQuery.of(context).size.width < 768; // Slightly larger break for Clean Lab feel
 
   List<_TabSpec> _buildTabs(SessionManager session) {
     final tabs = <_TabSpec>[];
-
-    tabs.add(
-      const _TabSpec(
-        label: 'Dashboard',
-        icon: Icons.dashboard,
-        page: DashboardHome(),
-      ),
-    );
-
-    tabs.addAll([
-      const _TabSpec(label: 'Routes', icon: Icons.alt_route, page: MapInterface()),
-      const _TabSpec(label: 'Warehouse', icon: Icons.warehouse, page: StockScreens()),
-    ]);
-
+    tabs.add(const _TabSpec(label: 'Dashboard', icon: Icons.grid_view_outlined, page: DashboardHome()));
+    tabs.add(const _TabSpec(label: 'Routes', icon: Icons.map_outlined, page: MapInterface()));
+    tabs.add(const _TabSpec(label: 'Warehouse', icon: Icons.inventory_2_outlined, page: StockScreens()));
     return tabs;
   }
 
   void _signOut(SessionManager session) {
     session.logout();
-    setState(() {
-      menuExpanded = false;
-      selectedPage = 0;
-    });
   }
 
   @override
@@ -59,89 +41,45 @@ class _PagesLayoutState extends State<PagesLayout> {
     final session = context.watch<SessionManager>();
     final tabs = _buildTabs(session);
     final safeIndex = selectedPage < tabs.length ? selectedPage : 0;
-    if (safeIndex != selectedPage) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        setState(() => selectedPage = safeIndex);
-      });
-    }
-
+    
     final pageTitle = tabs.isNotEmpty ? tabs[safeIndex].label : 'Dashboard';
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.foundation,
       body: Stack(
         children: [
-          if (!isMobile)
-            Positioned(
-              left: 0,
-              top: 0,
-              bottom: 0,
-              child: Sidebar(
-                width: leftBannerWidth,
-                expanded: sidebarExpanded,
-                selectedPage: safeIndex,
-                menuExpanded: menuExpanded,
-                tabs: tabs.map((t) => SidebarTab(label: t.label, icon: t.icon)).toList(),
-                onPageSelected: (idx) => setState(() => selectedPage = idx),
-                onToggleExpand: () => setState(() => sidebarExpanded = !sidebarExpanded),
-                onToggleMenu: () => setState(() => menuExpanded = !menuExpanded),
-                onSettings: () => setState(() {
-                  menuExpanded = false;
-                  showSettingsOverlay = true;
-                }),
-                onSignOut: () => _signOut(session),
-              ),
-            ),
-          Positioned.fill(
-            left: !isMobile ? (sidebarExpanded ? leftBannerWidth : 64) : 0,
-            child: MainContent(
-              topBannerHeight: isMobile ? 0 : topBannerHeight,
-              pageTitle: pageTitle,
-              page: tabs.isNotEmpty ? tabs[safeIndex].page : const SizedBox.shrink(),
-              onBannerHeightChanged: (dy) {
-                if (!isMobile) {
-                  setState(() {
-                    topBannerHeight += dy;
-                    if (topBannerHeight < 40) topBannerHeight = 40;
-                    if (topBannerHeight > 200) topBannerHeight = 200;
-                  });
-                }
-              },
-              userName: session.currentUser?.name,
-            ),
-          ),
-          if (isMobile)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Container(
-                color: Colors.blue,
-                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          Row(
+            children: [
+              if (!isMobile)
+                Sidebar(
+                  width: leftBannerWidth,
+                  expanded: false, // Will expand on hover internally
+                  selectedPage: safeIndex,
+                  tabs: tabs.map((t) => SidebarTab(label: t.label, icon: t.icon)).toList(),
+                  onPageSelected: (idx) => setState(() => selectedPage = idx),
+                  onSettings: () => setState(() => showSettingsOverlay = true),
+                  onSignOut: () => _signOut(session),
+                ),
+              Expanded(
+                child: Column(
                   children: [
-                    for (var i = 0; i < tabs.length; i++)
-                      _NavButton(
-                        icon: tabs[i].icon,
-                        label: tabs[i].label,
-                        selected: safeIndex == i,
-                        onTap: () => setState(() => selectedPage = i),
-                      ),
-                    IconButton(
-                      icon: const Icon(Icons.settings, color: Colors.white),
-                      tooltip: 'Settings',
-                      onPressed: () => setState(() => showSettingsOverlay = true),
+                    if (!isMobile)
+                      _Header(title: pageTitle, userName: session.currentUser?.name),
+                    Expanded(
+                      child: tabs.isNotEmpty ? tabs[safeIndex].page : const SizedBox.shrink(),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.logout, color: Colors.white),
-                      tooltip: 'Sign Out',
-                      onPressed: () => _signOut(session),
-                    ),
+                    if (isMobile) const SizedBox(height: 72), // Space for bottom nav
                   ],
                 ),
               ),
+            ],
+          ),
+          if (isMobile)
+            _MobileNav(
+              tabs: tabs,
+              currentIndex: safeIndex,
+              onTap: (idx) => setState(() => selectedPage = idx),
+              onSettings: () => setState(() => showSettingsOverlay = true),
             ),
           if (showSettingsOverlay)
             _SettingsOverlay(
@@ -156,40 +94,120 @@ class _PagesLayoutState extends State<PagesLayout> {
   }
 }
 
-class _TabSpec {
-  final String label;
-  final IconData icon;
-  final Widget page;
-
-  const _TabSpec({required this.label, required this.icon, required this.page});
-}
-
-class _NavButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _NavButton({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
+class _Header extends StatelessWidget {
+  final String title;
+  final String? userName;
+  const _Header({required this.title, this.userName});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+    return Container(
+      height: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      decoration: const BoxDecoration(
+        color: Colors.transparent, // Foundation handled by Scaffold
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(icon, color: selected ? Colors.white : Colors.white70),
-          Text(label, style: TextStyle(color: selected ? Colors.white : Colors.white70, fontSize: 12)),
+          Text(title, style: AppStyle.label(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.dataPrimary)),
+          if (userName != null)
+            Row(
+              children: [
+                Text(userName!, style: AppStyle.label(fontWeight: FontWeight.w600, color: AppColors.dataPrimary)),
+                const SizedBox(width: 8),
+                const CircleAvatar(
+                  radius: 14,
+                  backgroundColor: AppColors.border,
+                  child: Icon(Icons.person_outline, size: 16, color: AppColors.dataSecondary),
+                ),
+              ],
+            ),
         ],
       ),
     );
   }
+}
+
+class _MobileNav extends StatelessWidget {
+  final List<_TabSpec> tabs;
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+  final VoidCallback onSettings;
+
+  const _MobileNav({
+    required this.tabs,
+    required this.currentIndex,
+    required this.onTap,
+    required this.onSettings,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: 16,
+      right: 16,
+      bottom: 16,
+      child: Container(
+        height: 64,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(color: AppColors.border, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.dataPrimary.withOpacity(0.08),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            for (int i = 0; i < tabs.length; i++)
+              _MobileNavItem(
+                icon: tabs[i].icon,
+                isSelected: currentIndex == i,
+                onTap: () => onTap(i),
+              ),
+            _MobileNavItem(
+              icon: Icons.settings_outlined,
+              isSelected: false,
+              onTap: onSettings,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MobileNavItem extends StatelessWidget {
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _MobileNavItem({required this.icon, required this.isSelected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Icon(
+        icon,
+        color: isSelected ? AppColors.actionAccent : AppColors.dataSecondary,
+      ),
+    );
+  }
+}
+
+class _TabSpec {
+  final String label;
+  final IconData icon;
+  final Widget page;
+  const _TabSpec({required this.label, required this.icon, required this.page});
 }
 
 class _SettingsOverlay extends StatelessWidget {
@@ -204,18 +222,8 @@ class _SettingsOverlay extends StatelessWidget {
       onTapOutside: onClose,
       child: Container(
         width: 420,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha((0.08 * 255).round()),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
+        padding: const EdgeInsets.all(24),
+        decoration: AppStyle.surfaceCard,
         child: child,
       ),
     );

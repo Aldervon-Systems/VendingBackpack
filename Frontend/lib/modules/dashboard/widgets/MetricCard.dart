@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/styles/AppStyle.dart';
 
 class MetricCard extends StatelessWidget {
   final String label;
@@ -16,29 +17,29 @@ class MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final effectiveColor = color ?? theme.colorScheme.primary;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 24, color: effectiveColor),
-                const SizedBox(width: 8),
-                Text(label, style: theme.textTheme.bodySmall),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
+    return Container(
+      width: 180,
+      padding: const EdgeInsets.all(20),
+      decoration: AppStyle.surfaceCard,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: AppColors.dataSecondary),
+              const SizedBox(width: 8),
+              Text(
+                label.toUpperCase(),
+                style: AppStyle.label(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: AppStyle.metric(fontSize: 24, fontWeight: FontWeight.bold, color: color ?? AppColors.dataPrimary),
+          ),
+        ],
       ),
     );
   }

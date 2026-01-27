@@ -86,12 +86,13 @@ class SessionManager extends ChangeNotifier {
     }
   }
 
-  Future<void> signup(String name, String email, String password) async {
+  Future<void> signup(String name, String email, String password, {String role = 'employee'}) async {
     try {
       final response = await _api.post('/signup', {
         'name': name,
         'email': email,
         'password': password,
+        'role': role,
       });
       
       final userData = response['user'];

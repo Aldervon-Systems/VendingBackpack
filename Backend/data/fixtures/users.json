@@ -1,1 +1,9 @@
-[]
+[
+    {
+        "id": "user_admin",
+        "name": "Admin Manager",
+        "email": "admin@vbp.com",
+        "password": "password123",
+        "role": "manager"
+    }
+]

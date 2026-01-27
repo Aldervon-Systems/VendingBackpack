@@ -7,7 +7,11 @@ Rails.application.routes.draw do
     post "/signup", to: "api/auth#signup"
 
     get "/warehouse", to: "api/warehouse#warehouse"
+    get "/inventory", to: "api/warehouse#inventory"
     post "/warehouse/update", to: "api/warehouse#update_inventory"
+    post "/warehouse/add_stock", to: "api/warehouse#add_stock"
+    get "/warehouse/shipments", to: "api/warehouse#get_shipments"
+    post "/warehouse/shipments", to: "api/warehouse#add_shipment"
     get "/daily_stats", to: "api/warehouse#daily_stats"
 
     get "/items", to: "api/items#index"

@@ -18,8 +18,8 @@ class DashboardMetrics extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 12,
-      runSpacing: 12,
+      spacing: 16,
+      runSpacing: 16,
       children: [
         MetricCard(
           label: 'Total Machines',

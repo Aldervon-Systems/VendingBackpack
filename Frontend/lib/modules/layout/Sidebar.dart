@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/styles/AppStyle.dart';
 
 class SidebarTab {
   final String label;
@@ -7,15 +8,12 @@ class SidebarTab {
   const SidebarTab({required this.label, required this.icon});
 }
 
-class Sidebar extends StatelessWidget {
+class Sidebar extends StatefulWidget {
   final double width;
   final bool expanded;
   final int selectedPage;
-  final bool menuExpanded;
   final List<SidebarTab> tabs;
   final ValueChanged<int> onPageSelected;
-  final VoidCallback onToggleExpand;
-  final VoidCallback onToggleMenu;
   final VoidCallback onSettings;
   final VoidCallback onSignOut;
 
@@ -24,161 +22,159 @@ class Sidebar extends StatelessWidget {
     required this.width,
     required this.expanded,
     required this.selectedPage,
-    required this.menuExpanded,
     required this.tabs,
     required this.onPageSelected,
-    required this.onToggleExpand,
-    required this.onToggleMenu,
     required this.onSettings,
     required this.onSignOut,
   });
 
   @override
+  State<Sidebar> createState() => _SidebarState();
+}
+
+class _SidebarState extends State<Sidebar> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    // We use the hover state to auto-expand for the "Clean Lab" feel
+    final bool effectivelyExpanded = widget.expanded || _isHovered;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: effectivelyExpanded ? widget.width : 64,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          border: const Border(
+            right: BorderSide(color: AppColors.border, width: 1),
+          ),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 24),
+            _LogoEffect(expanded: effectivelyExpanded),
+            const SizedBox(height: 32),
+            for (var i = 0; i < widget.tabs.length; i++)
+              _SidebarNavItem(
+                icon: widget.tabs[i].icon,
+                label: widget.tabs[i].label,
+                isSelected: widget.selectedPage == i,
+                expanded: effectivelyExpanded,
+                onTap: () => widget.onPageSelected(i),
+              ),
+            const Spacer(),
+            _SidebarNavItem(
+              icon: Icons.settings_outlined,
+              label: 'Settings',
+              isSelected: false,
+              expanded: effectivelyExpanded,
+              onTap: widget.onSettings,
+            ),
+            _SidebarNavItem(
+              icon: Icons.logout_outlined,
+              label: 'Sign Out',
+              isSelected: false,
+              expanded: effectivelyExpanded,
+              onTap: widget.onSignOut,
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LogoEffect extends StatelessWidget {
+  final bool expanded;
+  const _LogoEffect({required this.expanded});
+
+  @override
   Widget build(BuildContext context) {
     return Container(
-      width: expanded ? width : 64,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: const Border(
-          right: BorderSide(color: Colors.black12, width: 1),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 2,
-            offset: const Offset(2, 0),
-          ),
-        ],
-      ),
-      child: Column(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisAlignment: expanded ? MainAxisAlignment.start : MainAxisAlignment.center,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                icon: AnimatedRotation(
-                  turns: expanded ? 0.0 : 0.5,
-                  duration: const Duration(milliseconds: 200),
-                  child: const Icon(Icons.arrow_left),
-                ),
-                tooltip: expanded ? 'Collapse' : 'Expand',
-                onPressed: onToggleExpand,
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: AppColors.dataPrimary,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Icon(Icons.bolt, color: Colors.white, size: 20),
+          ),
+          if (expanded) ...[
+            const SizedBox(width: 12),
+            const Text(
+              'LAB v2',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w800,
+                fontSize: 16,
+                letterSpacing: -0.5,
+                color: AppColors.dataPrimary,
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-            child: Column(
-              children: [
-                for (var i = 0; i < tabs.length; i++)
-                  SidebarButton(
-                    icon: tabs[i].icon,
-                    label: tabs[i].label,
-                    expanded: expanded,
-                    selected: selectedPage == i,
-                    onTap: () => onPageSelected(i),
-                  ),
-              ],
-            ),
-          ),
-          const Spacer(),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 0.0, top: 8.0),
-            child: Column(
-              children: [
-                SidebarButton(
-                  icon: Icons.menu,
-                  label: 'Menu',
-                  expanded: expanded,
-                  selected: false,
-                  onTap: onToggleMenu,
-                ),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOut,
-                  height: menuExpanded ? (expanded ? 112 : 80) : 0,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        SidebarButton(
-                          icon: Icons.settings,
-                          label: 'Settings',
-                          expanded: expanded,
-                          selected: false,
-                          onTap: onSettings,
-                        ),
-                        SidebarButton(
-                          icon: Icons.logout,
-                          label: 'Sign Out',
-                          expanded: expanded,
-                          selected: false,
-                          onTap: onSignOut,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          ],
         ],
       ),
     );
   }
 }
 
-class SidebarButton extends StatelessWidget {
+class _SidebarNavItem extends StatelessWidget {
   final IconData icon;
   final String label;
+  final bool isSelected;
   final bool expanded;
-  final bool selected;
   final VoidCallback onTap;
 
-  const SidebarButton({
-    super.key,
+  const _SidebarNavItem({
     required this.icon,
     required this.label,
+    required this.isSelected,
     required this.expanded,
-    required this.selected,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
-          padding: EdgeInsets.symmetric(
-            vertical: 8,
-            horizontal: expanded ? 16 : 0,
-          ),
-          decoration: BoxDecoration(
-            color: selected ? Colors.black12 : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            mainAxisAlignment: expanded ? MainAxisAlignment.start : MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: selected ? Colors.black : Colors.black38),
-              if (expanded)
-                Padding(
-                  padding: const EdgeInsets.only(left: 12.0),
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color: selected ? Colors.black : Colors.black54,
-                      fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                      fontFamily: 'serif',
-                    ),
-                  ),
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        height: 48,
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.foundation : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          mainAxisAlignment: expanded ? MainAxisAlignment.start : MainAxisAlignment.center,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(left: expanded ? 12 : 0),
+              child: Icon(
+                icon,
+                size: 20,
+                color: isSelected ? AppColors.actionAccent : AppColors.dataSecondary,
+              ),
+            ),
+            if (expanded) ...[
+              const SizedBox(width: 12),
+              Text(
+                label,
+                style: AppStyle.label(
+                  color: isSelected ? AppColors.dataPrimary : AppColors.dataSecondary,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 ),
+              ),
             ],
-          ),
+          ],
         ),
       ),
     );
