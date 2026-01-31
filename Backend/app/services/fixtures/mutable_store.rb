@@ -66,6 +66,7 @@ module Fixtures
         else
           employee_routes << route
         end
+        save_json("employee_routes.json", employee_routes)
       end
 
       def reset!

@@ -71,7 +71,7 @@ class MapInterface extends StatelessWidget {
       create: (_) => RoutePlanner(restrictedEmployeeId: restrictedId)..loadRoutes(),
       child: Consumer<RoutePlanner>(
         builder: (context, planner, child) {
-          if (planner.isLoading) {
+          if (planner.isLoading && planner.locations.isEmpty) {
             return const Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.border));
           }
           
@@ -97,17 +97,22 @@ class MapInterface extends StatelessWidget {
                 ),
                 children: [
                   TileLayer(
-                    urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', // Using a lighter, minimalist map
+                    urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', 
                     userAgentPackageName: 'com.vendingbackpack.app',
                   ),
                   PolylineLayer(
                     polylines: [
-                      for (final route in planner.polylines)
-                        Polyline(
-                          points: (route['points'] as List<List<double>>).map((p) => LatLng(p[0], p[1])).toList(),
-                          strokeWidth: 2.0,
-                          color: AppColors.actionAccent.withOpacity(0.6),
-                        ),
+                      // Render all routes
+                      for (final entry in planner.allPolylines.entries) ...[
+                        if (entry.value['points'] != null)
+                          Polyline(
+                            points: (entry.value['points'] as List).map((p) => LatLng(p[0], p[1])).toList(),
+                            strokeWidth: entry.key == planner.activeEmployeeId ? 5.0 : 2.5,
+                            color: Color(entry.value['color']).withOpacity(
+                              entry.key == planner.activeEmployeeId ? 1.0 : 0.4
+                            ),
+                          ),
+                      ]
                     ],
                   ),
                   MarkerLayer(
@@ -157,147 +162,23 @@ class MapInterface extends StatelessWidget {
                             )),
                           ],
                         ),
+                        const SizedBox(width: 8),
+                        if (planner.isLoading)
+                          const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.actionAccent))
+                        else
+                          IconButton(
+                            onPressed: () => planner.autogenerateRoutes(),
+                            icon: const Icon(Icons.auto_awesome, size: 16, color: AppColors.actionAccent),
+                            tooltip: 'AUTO-GENERATE ALL ROUTES',
+                          ),
                       ],
                     ),
                   ),
                 ),
-              if (isManager && planner.activeEmployeeId != null && planner.activeEmployeeId != 'all')
-                 _RouteEditorPanel(planner: planner),
             ],
           );
         },
       ),
-    );
-  }
-}
-
-class _RouteEditorPanel extends StatelessWidget {
-  final RoutePlanner planner;
-  const _RouteEditorPanel({required this.planner});
-
-  @override
-  Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.35,
-      minChildSize: 0.15,
-      maxChildSize: 0.8,
-      builder: (ctx, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20)],
-          ),
-          child: _RouteEditor(planner: planner, scrollController: scrollController),
-        );
-      },
-    );
-  }
-}
-
-class _RouteEditor extends StatefulWidget {
-  final RoutePlanner planner;
-  final ScrollController scrollController;
-  const _RouteEditor({required this.planner, required this.scrollController});
-
-  @override
-  State<_RouteEditor> createState() => _RouteEditorState();
-}
-
-class _RouteEditorState extends State<_RouteEditor> {
-  late List<dynamic> _stops;
-
-  @override
-  void initState() {
-    super.initState();
-    _stops = List.from(widget.planner.activeRouteStops);
-  }
-
-  void _save() {
-    final stopIds = _stops.map((s) => s['id'] as String).toList();
-    if (widget.planner.activeEmployeeId != null) {
-      widget.planner.updateRouteStops(widget.planner.activeEmployeeId!, stopIds);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        backgroundColor: AppColors.success,
-        content: Text('ROUTE RECONFIGURED', style: AppStyle.label(color: Colors.white, fontWeight: FontWeight.bold)),
-      ));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final allLocations = widget.planner.locations;
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(24),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('ROUTE_SEQUENCE // EDIT', style: AppStyle.label(fontWeight: FontWeight.w800, color: AppColors.dataPrimary, letterSpacing: 1.0)),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.actionAccent, elevation: 0),
-                onPressed: _save, 
-                child: Text('SAVE', style: AppStyle.label(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            controller: widget.scrollController,
-            itemCount: _stops.length + 1,
-            itemBuilder: (context, index) {
-              if (index == _stops.length) {
-                return Center(
-                  child: TextButton.icon(
-                    onPressed: () {
-                      if (allLocations.isNotEmpty) setState(() => _stops.add(allLocations.first));
-                    },
-                    icon: const Icon(Icons.add, size: 16),
-                    label: Text('APPEND NODE', style: AppStyle.label(fontWeight: FontWeight.bold)),
-                  ),
-                );
-              }
-
-              final stop = _stops[index];
-              final stopId = stop['id'];
-              final isValid = allLocations.any((l) => l['id'] == stopId);
-              
-              return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-                decoration: BoxDecoration(color: AppColors.foundation, borderRadius: BorderRadius.circular(6)),
-                child: ListTile(
-                  leading: Text('#${index + 1}', style: AppStyle.metric(fontSize: 12, color: AppColors.dataSecondary)),
-                  title: DropdownButton<String>(
-                    isExpanded: true,
-                    value: isValid ? stopId : null,
-                    underline: const SizedBox(),
-                    items: allLocations.map((loc) {
-                      return DropdownMenuItem<String>(
-                        value: loc['id'],
-                        child: Text(loc['name'].toUpperCase(), style: AppStyle.label(fontSize: 12, color: AppColors.dataPrimary)),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val == null) return;
-                      setState(() {
-                        final newLoc = allLocations.firstWhere((l) => l['id'] == val);
-                        _stops[index] = newLoc;
-                      });
-                    },
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.close, size: 16, color: AppColors.warning),
-                    onPressed: () => setState(() => _stops.removeAt(index)),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
     );
   }
 }

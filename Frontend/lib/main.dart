@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'modules/auth/SessionManager.dart';
 import 'modules/auth/AccessScreens.dart';
 import 'modules/layout/PagesLayout.dart';
 import 'modules/dashboard/BusinessMetrics.dart';
 import 'core/styles/AppStyle.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 void main() {
   runApp(const MyApp());
@@ -31,7 +31,6 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(
             seedColor: AppColors.actionAccent,
             surface: AppColors.surface,
-            background: AppColors.foundation,
           ),
           textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme).copyWith(
             displayLarge: AppStyle.metric(fontSize: 32, fontWeight: FontWeight.bold),
@@ -45,7 +44,6 @@ class MyApp extends StatelessWidget {
             elevation: 0,
             centerTitle: false,
             titleTextStyle: TextStyle(
-              fontFamily: 'Inter',
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: AppColors.dataPrimary,

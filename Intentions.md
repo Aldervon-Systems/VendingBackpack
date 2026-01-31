@@ -52,6 +52,7 @@ Purpose: Keep a short, always-updated record of (1) what we will do next and (2)
 
 ## Journal (append-only)
 
+- [Antigravity] [2026-01-27] Resolved web compilation errors by removing `dart:ui` FontFeatures and relaxing SDK constraints. "Clean Lab" theme active.
 - [Antigravity] [2026-01-27] Completed "Clean Lab" visual overhaul: custom fonts, palette, and navigation (ref: AppStyle.dart)
 - [Antigravity] [2026-01-27] Starting "Clean Lab" Visual Overhaul
 - [Antigravity] [2026-01-27] Fixed build error in StockScreens.dart and finalized layout

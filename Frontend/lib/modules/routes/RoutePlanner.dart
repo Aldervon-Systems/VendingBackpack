@@ -15,14 +15,15 @@ class RoutePlanner extends ChangeNotifier {
   bool get isLoading => _isLoading;
   List<dynamic> _employees = [];
   String? _activeEmployeeId;
-  List<dynamic> _activeRouteStops = []; // Only relevant for single selection or just last loaded?
-  // List of { 'color': Color, 'points': List<[lat, lng]> }
-  List<Map<String, dynamic>> _polylines = []; 
+  List<dynamic> _activeRouteStops = []; 
+  
+  // Now stores all routes: map of employeeId -> { color, points }
+  final Map<String, dynamic> _allPolylines = {}; 
 
   List<dynamic> get employees => _employees;
   String? get activeEmployeeId => _activeEmployeeId;
   List<dynamic> get activeRouteStops => _activeRouteStops;
-  List<Map<String, dynamic>> get polylines => _polylines;
+  Map<String, dynamic> get allPolylines => _allPolylines;
 
   Future<void> loadRoutes() async {
     _isLoading = true;
@@ -33,6 +34,7 @@ class RoutePlanner extends ChangeNotifier {
         _locations = data['locations'];
       }
       await loadEmployees();
+      await _fetchAllRoutes(); // Always fetch all routes for background visualization
       
       if (restrictedEmployeeId != null) {
         selectEmployee(restrictedEmployeeId);
@@ -58,70 +60,97 @@ class RoutePlanner extends ChangeNotifier {
 
   void selectEmployee(String? employeeId) {
     _activeEmployeeId = employeeId;
-    _activeRouteStops = [];
-    _polylines = [];
     
-    if (employeeId == 'all') {
-      _fetchAllRoutes();
-    } else if (employeeId != null) {
-      _fetchEmployeeRoute(employeeId);
+    // Reset active stops editor list
+    if (employeeId != null && employeeId != 'all') {
+       // PRE-POPULATE from cache if available for immediate UI feedback
+       if (_allPolylines.containsKey(employeeId) && _allPolylines[employeeId]['stops'] != null) {
+         _activeRouteStops = List.from(_allPolylines[employeeId]['stops']);
+       } else {
+         _activeRouteStops = [];
+       }
+       notifyListeners();
+       _fetchEmployeeRouteStops(employeeId);
     } else {
+      _activeRouteStops = [];
       notifyListeners();
     }
   }
 
   Future<void> _fetchAllRoutes() async {
-    _isLoading = true;
-    notifyListeners();
     try {
-      for (final emp in _employees) {
-        // Fetch each sequentially to avoid hammering the demo API
-        final routes = await _api.get('/employees/${emp['id']}/routes');
-        if (routes is List && routes.isNotEmpty) {
-           final route = routes.first;
-           if (route['stops'] is List && (route['stops'] as List).length >= 2) {
-             final points = await _fetchOSRMGeometryPoints(route['stops']);
-             // Use a consistent color or random, or parse from employee if available
-             // Employee model in backend has 'color' but simpler to just hash string to color or rotating list
-             _polylines.add({
+      // Use the batch endpoint for efficiency
+      final routes = await _api.get('/employees/routes');
+      if (routes is List) {
+        for (final route in routes) {
+          final eid = route['employee_id'].toString();
+          final stops = route['stops'] as List?;
+          
+          if (stops != null && stops.length >= 2) {
+             final points = await _fetchOSRMGeometryPoints(stops);
+             _allPolylines[eid] = {
                'points': points,
-               'color': _getColorForId(emp['id'].toString())
-             });
-           }
+               'stops': stops, // Cache stops for the editor
+               'color': _getColorForId(eid)
+             };
+          } else if (stops != null) {
+             // Cache stops even if too short for a polyline
+             _allPolylines[eid] = {
+               'points': [],
+               'stops': stops,
+               'color': _getColorForId(eid)
+             };
+          }
         }
       }
     } catch (e) {
       debugPrint('Error fetching all routes: $e');
-    } finally {
-      _isLoading = false;
-      notifyListeners();
     }
   }
 
-  Future<void> _fetchEmployeeRoute(String employeeId) async {
+  Future<void> _fetchEmployeeRouteStops(String employeeId) async {
     _isLoading = true;
     notifyListeners();
     try {
-      final routes = await _api.get('/employees/$employeeId/routes');
-      if (routes is List && routes.isNotEmpty) {
-        final route = routes.first;
-        if (route['stops'] is List) {
-          _activeRouteStops = route['stops'];
-          final points = await _fetchOSRMGeometryPoints(_activeRouteStops);
-          _polylines = [{
-            'points': points,
-            'color': _getColorForId(employeeId)
-          }];
+      final response = await _api.get('/employees/$employeeId/routes');
+      
+      if (_activeEmployeeId != employeeId) return;
+
+      dynamic route;
+      if (response is List) {
+        route = response.isNotEmpty ? response.first : null;
+      } else if (response is Map) {
+        route = response;
+      }
+
+      if (route != null && route['stops'] is List) {
+        final stops = route['stops'] as List;
+        _activeRouteStops = stops;
+        
+        if (stops.length >= 2) {
+          final points = await _fetchOSRMGeometryPoints(stops);
+          if (_activeEmployeeId != employeeId) return;
+
+          _allPolylines[employeeId] = {
+             'points': points,
+             'stops': stops, // Update cache
+             'color': _getColorForId(employeeId)
+          };
+        } else {
+          _allPolylines[employeeId] = {
+             'points': [],
+             'stops': stops,
+             'color': _getColorForId(employeeId)
+          };
         }
-      } else {
-        _activeRouteStops = [];
-        _polylines = [];
       }
     } catch (e) {
       debugPrint('Error fetching employee route: $e');
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (_activeEmployeeId == employeeId) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -134,23 +163,35 @@ class RoutePlanner extends ChangeNotifier {
       });
       
       if (updatedRoute != null && updatedRoute['stops'] is List) {
-        // Refresh view based on current selection
-        if (_activeEmployeeId == 'all') {
-          selectEmployee('all'); // Reload all
-        } else if (_activeEmployeeId == employeeId) {
-          _activeRouteStops = updatedRoute['stops'];
-          final points = await _fetchOSRMGeometryPoints(_activeRouteStops);
-          _polylines = [{
-            'points': points,
-            'color': _getColorForId(employeeId)
-          }];
+        final stops = updatedRoute['stops'] as List;
+        if (stops.length >= 2) {
+           final points = await _fetchOSRMGeometryPoints(stops);
+           if (_activeEmployeeId == employeeId) {
+             _allPolylines[employeeId] = {
+               'points': points,
+               'stops': stops,
+               'color': _getColorForId(employeeId)
+             };
+             _activeRouteStops = stops;
+           }
+        } else {
+           if (_activeEmployeeId == employeeId) {
+             _allPolylines[employeeId] = {
+               'points': [],
+               'stops': stops,
+               'color': _getColorForId(employeeId)
+             };
+             _activeRouteStops = stops;
+           }
         }
       }
     } catch (e) {
       debugPrint('Error assigning route: $e');
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (_activeEmployeeId == employeeId) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -158,21 +199,6 @@ class RoutePlanner extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      // Use client.put directly because ApiClient might not have a put wrapper exposed or documented easily, checking... 
-      // ApiClient.dart has get and post only. So I'll use _api.client.put
-      // Wait, ApiClient.dart code view earlier showed get and post. No put. 
-      // I'll add PUT to ApiClient or just use _api.client.put here.
-      // Let's use _api.client.put. url needs to be full.
-      // Actually ApiClient has _buildUrl strictly private.
-      // I should probably add put to ApiClient, but for now I'll hack it or add it.
-      // Adding it to ApiClient is cleaner. 
-      // But to save context switching I will just assume I can pass manual full URL or just modify ApiClient quickly?
-      // Modifying ApiClient is better practice. But I am in RoutePlanner. 
-      // Let's modify ApiClient first? No, the tool call is already for RoutePlanner.
-      // I'll just copy the _buildUrl logic effectively or use the public getter `ApiClient.baseUrl` provided it is public?
-      // ApiClient.dart: static String get baseUrl. 
-      // So I can do: Uri.parse('${ApiClient.baseUrl}/employees/$employeeId/routes/stops')
-      
       final url = Uri.parse('${ApiClient.baseUrl}/employees/$employeeId/routes/stops');
       final response = await _api.client.put(
         url,
@@ -182,13 +208,32 @@ class RoutePlanner extends ChangeNotifier {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final updatedRoute = jsonDecode(response.body);
+        
+        if (_activeEmployeeId != employeeId) return;
+
         if (updatedRoute != null && updatedRoute['stops'] is List) {
-          _activeRouteStops = updatedRoute['stops'];
-          final points = await _fetchOSRMGeometryPoints(_activeRouteStops);
-          _polylines = [{
-            'points': points,
-            'color': _getColorForId(employeeId)
-          }];
+          final stops = updatedRoute['stops'] as List;
+          if (stops.length >= 2) {
+             final points = await _fetchOSRMGeometryPoints(stops);
+             
+             if (_activeEmployeeId != employeeId) return;
+
+             _allPolylines[employeeId] = {
+               'points': points,
+               'stops': stops,
+               'color': _getColorForId(employeeId)
+             };
+          } else {
+             _allPolylines[employeeId] = {
+               'points': [],
+               'stops': stops,
+               'color': _getColorForId(employeeId)
+             };
+          }
+
+          if (_activeEmployeeId == employeeId) {
+            _activeRouteStops = stops;
+          }
         }
       } else {
         throw Exception('Failed to update route stops: ${response.statusCode}');
@@ -196,12 +241,13 @@ class RoutePlanner extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error updating route stops: $e');
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (_activeEmployeeId == employeeId) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
-  // Helper to return just the points, not setting state directly
   Future<List<List<double>>> _fetchOSRMGeometryPoints(List<dynamic> stops) async {
     if (stops.length < 2) return [];
 
@@ -232,9 +278,34 @@ class RoutePlanner extends ChangeNotifier {
     ]).toList();
   }
 
+  Future<void> autogenerateRoutes() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final response = await _api.post('/routes/autogenerate', {});
+      if (response != null && response['status'] == 'success') {
+        // Full reload of routes and stops
+        await _fetchAllRoutes();
+        
+        // If we have an active employee, refresh their sequence
+        if (_activeEmployeeId != null && _activeEmployeeId != 'all') {
+          if (_allPolylines.containsKey(_activeEmployeeId)) {
+            _activeRouteStops = List.from(_allPolylines[_activeEmployeeId]['stops']);
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error autogenerating routes: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   int _getColorForId(String id) {
-    // Generate a consistent pseudo-random color (ARGB)
     final hash = id.hashCode;
-    return 0xFF000000 | (hash & 0xFFFFFF);
+    // Ensure high contrast/brightness
+    // Just using a deterministic spread of hues
+    return 0xFF000000 | (hash & 0xFFFFFF); 
   }
 }

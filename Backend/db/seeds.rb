@@ -1,9 +1,46 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+# Load fixtures
+employees_json = JSON.parse(File.read(Rails.root.join('data', 'fixtures', 'employees.json')))
+locations_json = JSON.parse(File.read(Rails.root.join('data', 'fixtures', 'locations.json')))
+routes_json = JSON.parse(File.read(Rails.root.join('data', 'fixtures', 'employee_routes.json')))
+
+puts "Seeding employees..."
+employees_json.each do |data|
+  Employee.find_or_create_by!(id: data['id']) do |e|
+    e.name = data['name']
+    e.color = data['color']
+    e.department = data['department']
+    e.location = data['location']
+    e.floor = data['floor']
+    e.building = data['building']
+    e.is_active = data['is_active']
+  end
+end
+
+puts "Seeding machines..."
+locations_json.each do |data|
+  Machine.find_or_create_by!(id: data['id']) do |m|
+    m.name = data['name']
+    m.lat = data['lat']
+    m.lng = data['lng']
+  end
+end
+
+puts "Seeding routes..."
+routes_json.each do |data|
+  employee = Employee.find_by(id: data['employee_id'])
+  next unless employee
+
+  route = Route.create!(
+    employee: employee,
+    employee_name: data['employee_name'],
+    distance_meters: data['distance_meters'] || 0,
+    duration_seconds: data['duration_seconds'] || 0
+  )
+
+  (data['stops'] || []).each_with_index do |stop_data, index|
+    machine = Machine.find_by(id: stop_data['id'])
+    if machine
+      Stop.create!(route: route, machine: machine, position: index)
+    end
+  end
+end

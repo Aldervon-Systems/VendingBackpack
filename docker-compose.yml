@@ -12,6 +12,8 @@ services:
       BINDING: 0.0.0.0
     ports:
       - "${BACKEND_NEW_PORT:-9090}:9090"
+    volumes:
+      - ./Backend/storage:/rails/storage
 
   frontend_new:
     image: ghcr.io/aldervon-systems/vendingbackpack/frontend:latest

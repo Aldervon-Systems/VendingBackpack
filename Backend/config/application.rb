@@ -4,9 +4,8 @@ require "rails"
 # Pick the frameworks you want:
 require "active_model/railtie"
 require "active_job/railtie"
-# Fixture-backed API: no database/ActiveRecord.
 # Re-enable active_record/railtie when you add a DB-backed implementation.
-# require "active_record/railtie"
+require "active_record/railtie"
 # require "active_storage/engine"
 require "action_controller/railtie"
 require "action_mailer/railtie"

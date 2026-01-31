@@ -84,7 +84,6 @@ class _AccessScreensState extends State<AccessScreens> {
                 Text(
                   _isLoginMode ? 'Sign In' : 'Register',
                   style: const TextStyle(
-                    fontFamily: 'Inter',
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
                     color: AppColors.dataPrimary,
@@ -194,7 +193,7 @@ class _LabTextField extends StatelessWidget {
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
-          style: const TextStyle(fontFamily: 'Inter', fontSize: 14),
+          style: const TextStyle(fontSize: 14),
           decoration: InputDecoration(
             filled: true,
             fillColor: AppColors.foundation,
@@ -243,7 +242,7 @@ class _LabDropdown extends StatelessWidget {
           value: value,
           onChanged: onChanged,
           items: items,
-          style: const TextStyle(fontFamily: 'Inter', fontSize: 14, color: AppColors.dataPrimary),
+          style: const TextStyle(fontSize: 14, color: AppColors.dataPrimary),
           decoration: InputDecoration(
             filled: true,
             fillColor: AppColors.foundation,

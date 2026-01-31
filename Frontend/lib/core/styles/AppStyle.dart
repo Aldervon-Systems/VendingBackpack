@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
   static const Color foundation = Color(0xFFF8FAFC);
@@ -18,11 +17,10 @@ class AppStyle {
     Color color = AppColors.dataPrimary,
     FontWeight fontWeight = FontWeight.w600,
   }) {
-    return GoogleFonts.jetBrainsMono(
+    return TextStyle(
       fontSize: fontSize,
       color: color,
       fontWeight: fontWeight,
-      fontFeatures: const [FontFeature.tabularFigures()],
     );
   }
 
@@ -31,12 +29,14 @@ class AppStyle {
     Color color = AppColors.dataSecondary,
     FontWeight fontWeight = FontWeight.w500,
     double letterSpacing = 0.5,
+    TextDecoration? decoration,
   }) {
-    return GoogleFonts.inter(
+    return TextStyle(
       fontSize: fontSize,
       color: color,
       fontWeight: fontWeight,
       letterSpacing: letterSpacing,
+      decoration: decoration,
     );
   }
 
