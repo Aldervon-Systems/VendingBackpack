@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BusinessMetrics()),
       ],
       child: MaterialApp(
-        title: 'VendingBackpack',
+        title: 'VendingBackpack v2.2',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,

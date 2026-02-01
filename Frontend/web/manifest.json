@@ -1,6 +1,6 @@
 {
-    "name": "v1",
-    "short_name": "v1",
+    "name": "VendingBackpack v2",
+    "short_name": "VendingBackpack v2",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

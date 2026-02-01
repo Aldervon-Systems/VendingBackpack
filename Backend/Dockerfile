@@ -9,7 +9,7 @@ WORKDIR /rails
 
 # Default environment; can be overridden in docker-compose.
 ENV RAILS_ENV="development" \
-    BUNDLE_DEPLOYMENT="1" \
+    BUNDLE_DEPLOYMENT="0" \
     BUNDLE_PATH="/usr/local/bundle"
 
 
@@ -24,18 +24,23 @@ RUN apt-get update -qq && \
 COPY Gemfile Gemfile.lock ./
 ARG BUNDLER_VERSION=4.0.3
 RUN gem install bundler -v "$BUNDLER_VERSION"
-RUN bundle install && \
+# Force cache break
+ARG CACHE_DATE=2026-01-31T0515
+RUN echo $CACHE_DATE && bundle lock --add-platform x86_64-linux && \
+    bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
     bundle exec bootsnap precompile --gemfile
 
 # Copy application code
 COPY . .
 
-# Ensure scripts use Unix line endings to avoid CRLF shebang issues on Windows
-# (fixes errors like: env: ‘ruby\r’: No such file or directory)
+# Ensure lockfile is updated for development platform if it was overwritten
+RUN bundle lock --add-platform x86_64-linux
+
+# Ensure scripts use Unix line endings
 RUN find ./bin -type f -print0 | xargs -0 sed -i 's/\r$//' || true
 
-# Precompile bootsnap code for faster boot times
+# Precompile bootsnap code
 RUN bundle exec bootsnap precompile app/ lib/
 
 

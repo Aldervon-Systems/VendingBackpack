@@ -24,14 +24,26 @@
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="v1">
+  <meta name="apple-mobile-web-app-title" content="VendingBackpack v2">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png" />
 
-  <title>Vending Backpack v2</title>
+  <title>Vending Backpack v2.2</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- FORCE DELETE SERVICE WORKER CACHE -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (registrations) {
+        for (let registration of registrations) {
+          registration.unregister();
+          console.log('ServiceWorker unregistered');
+        }
+      });
+    }
+  </script>
 </head>
 
 <body>

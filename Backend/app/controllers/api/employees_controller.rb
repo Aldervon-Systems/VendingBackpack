@@ -200,20 +200,5 @@ module Api
       # p1 and p2 are expected to be hashes or model as_json results
       Math.sqrt(((p1["lat"] || 0) - (p2["lat"] || 0))**2 + ((p1["lng"] || 0) - (p2["lng"] || 0))**2)
     end
-
-    def normalize_employee(employee)
-      {
-        "id" => employee["id"],
-        "name" => employee["name"],
-        "color" => employee["color"],
-        "department" => employee["department"],
-        "location" => employee["location"],
-        "floor" => employee["floor"],
-        "building" => employee["building"],
-        "is_active" => employee.key?("is_active") ? employee["is_active"] : true,
-        "created_at" => employee["created_at"],
-        "updated_at" => employee["updated_at"]
-      }
-    end
   end
 end

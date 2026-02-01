@@ -3,13 +3,17 @@
 FROM ghcr.io/cirruslabs/flutter:stable AS build
 WORKDIR /app
 
+# Force cache break for fresh build
+ARG CACHE_DATE=2026-02-01T0650
+RUN echo $CACHE_DATE
+
 COPY pubspec.yaml pubspec.lock* ./
 RUN flutter pub get
 
-COPY . .
-
-# Ensure web platform exists. If web/ is missing, this will add it.
+# Ensure web platform exists BEFORE copying custom web/ assets
 RUN flutter create --platforms=web .
+
+COPY . .
 
 RUN flutter build web --release
 
