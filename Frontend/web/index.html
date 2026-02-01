@@ -30,24 +30,47 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png" />
 
-  <title>Vending Backpack v2.2</title>
+  <title>Vending Backpack v2.4</title>
   <link rel="manifest" href="manifest.json">
 
-  <!-- FORCE DELETE SERVICE WORKER CACHE -->
+  <!-- FORCE DELETE SERVICE WORKER AND CACHE, THEN LOAD APP -->
   <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function (registrations) {
+    async function loadApp() {
+      console.log('Checking for stale cache/service workers...');
+
+      // 1. Cleanup Service Workers
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
         for (let registration of registrations) {
-          registration.unregister();
+          await registration.unregister();
           console.log('ServiceWorker unregistered');
         }
-      });
+      }
+
+      // 2. Cleanup Cache Storage
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        for (const key of keys) {
+          await caches.delete(key);
+          console.log('Cache memory cleared:', key);
+        }
+      }
+
+      // 3. Load the app with cache busting timestamp
+      console.log('Starting app (v2.4)...');
+      const script = document.createElement('script');
+      script.src = "flutter_bootstrap.js?v=" + new Date().getTime();
+      script.async = true;
+      document.body.appendChild(script);
     }
+
+    // Run on window load
+    window.addEventListener('load', loadApp);
   </script>
 </head>
 
 <body>
-  <script src="flutter_bootstrap.js" async></script>
+  <!-- Script injected by loadApp() -->
 </body>
 
 </html>
