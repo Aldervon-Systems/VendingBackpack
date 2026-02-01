@@ -15,7 +15,7 @@ RUN flutter create --platforms=web .
 
 COPY . .
 
-RUN flutter build web --release
+RUN flutter build web --release --pwa-strategy=none
 
 # Copy build artifact into a Deploy-style folder inside the image (matches repo intent)
 RUN mkdir -p /Deploy/frontend && cp -R build/web/* /Deploy/frontend/
