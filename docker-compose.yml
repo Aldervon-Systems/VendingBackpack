@@ -1,34 +1,29 @@
 services:
-  backend_new:
+  backend:
     image: ghcr.io/aldervon-systems/vendingbackpack/backend:latest
     build:
       context: ./Backend
       dockerfile: Dockerfile
-    container_name: vending_backend
+    container_name: vending_backpack_backend
     restart: unless-stopped
     environment:
-      RAILS_ENV: development
+      RAILS_ENV: production
       PORT: 9090
       BINDING: 0.0.0.0
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:-fe12ec71223c92b31df728b8f8159c44618a53c6121f7537533c6afb8e500550f3c362ba522ef34f6d93dd81932de64b8f7170dabebd6a618ee2f57f1bba5fae}
     ports:
-      - "${BACKEND_NEW_PORT:-9090}:9090"
+      - "9090:9090"
     volumes:
       - ./Backend/storage:/rails/storage
 
-  frontend_new:
+  frontend:
     image: ghcr.io/aldervon-systems/vendingbackpack/frontend:latest
     build:
       context: ./Frontend
       dockerfile: Dockerfile
-    container_name: vending_frontend_new
+    container_name: vending_frontend
     restart: unless-stopped
-    environment:
-      API_SCHEME: ${API_SCHEME:-http}
-      API_PRIMARY_HOST: ${API_PRIMARY_HOST:-backend_new:9090}
-      API_FALLBACK_HOST: ${API_FALLBACK_HOST:-backend_new:9090}
     ports:
-      - "${FRONTEND_NEW_PORT:-8082}:80"
+      - "9100:80"
     depends_on:
-      - backend_new
-    # volumes:
-    #   - ./Frontend/nginx/default.conf:/etc/nginx/templates/default.conf.template:ro
+      - backend

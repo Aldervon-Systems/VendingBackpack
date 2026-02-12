@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "fileutils"
 
 module Fixtures
   class MutableStore
@@ -95,11 +96,13 @@ module Fixtures
       end
 
       def load_json(name, fallback)
+        FileUtils.mkdir_p(FIXTURES_DIR) unless Dir.exist?(FIXTURES_DIR)
         path = FIXTURES_DIR.join(name)
         return fallback unless path.exist?
 
         JSON.parse(path.read)
-      rescue JSON::ParserError
+      rescue => e
+        Rails.logger.error "Error loading JSON #{name}: #{e.message}"
         fallback
       end
 
