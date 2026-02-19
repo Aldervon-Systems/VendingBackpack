@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'SessionManager.dart';
+import 'OrganizationOnboardingScreen.dart';
 import 'package:provider/provider.dart';
 import '../../core/styles/AppStyle.dart';
 
@@ -14,9 +15,13 @@ class _AccessScreensState extends State<AccessScreens> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
+  final _orgSearchController = TextEditingController();
   bool _isLoading = false;
   bool _isLoginMode = true;
   String _selectedRole = 'employee';
+  String? _selectedOrgId;
+  String? _selectedOrgName;
+  List<Map<String, dynamic>> _orgSearchResults = [];
   String? _error;
 
   Future<void> _handleSubmit() async {
@@ -30,6 +35,7 @@ class _AccessScreensState extends State<AccessScreens> {
         await context.read<SessionManager>().login(
           _emailController.text,
           _passwordController.text,
+          organizationId: _selectedOrgId,
         );
       } else {
         await context.read<SessionManager>().signup(
@@ -37,6 +43,7 @@ class _AccessScreensState extends State<AccessScreens> {
           _emailController.text,
           _passwordController.text,
           role: _selectedRole,
+          organizationId: _selectedOrgId,
         );
       }
     } catch (e) {
@@ -47,12 +54,27 @@ class _AccessScreensState extends State<AccessScreens> {
           _error = 'Account exists';
         } else if (message.contains('Invalid credentials')) {
           _error = 'Invalid credentials';
+        } else if (message.contains('Email not authorized')) {
+          _error = 'Whitelist rejection';
         } else {
           _error = 'Server error';
         }
       });
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _searchOrgs(String query) async {
+    if (query.isEmpty) {
+      setState(() => _orgSearchResults = []);
+      return;
+    }
+    try {
+      final results = await context.read<SessionManager>().searchOrganizations(query);
+      setState(() => _orgSearchResults = results);
+    } catch (e) {
+      debugPrint('Org search failed: $e');
     }
   }
 
@@ -95,6 +117,74 @@ class _AccessScreensState extends State<AccessScreens> {
                   style: AppStyle.label(fontSize: 14),
                 ),
                 const SizedBox(height: 32),
+                if (_selectedOrgId != null) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.actionAccent.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: AppColors.actionAccent),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.business, size: 16, color: AppColors.actionAccent),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'TENANT: ${_selectedOrgName!.toUpperCase()}',
+                            style: AppStyle.label(color: AppColors.actionAccent, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: const Icon(Icons.close, size: 16, color: AppColors.actionAccent),
+                          onPressed: () => setState(() {
+                            _selectedOrgId = null;
+                            _selectedOrgName = null;
+                            _orgSearchController.clear();
+                          }),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ] else ...[
+                  _LabTextField(
+                    controller: _orgSearchController,
+                    label: 'SELECT ORGANIZATION (TENANT)',
+                    onChanged: _searchOrgs,
+                    suffixIcon: const Icon(Icons.search, size: 16),
+                  ),
+                  if (_orgSearchResults.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Container(
+                      constraints: const BoxConstraints(maxHeight: 120),
+                      decoration: BoxDecoration(
+                        color: AppColors.foundation,
+                        border: Border.all(color: AppColors.border),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _orgSearchResults.length,
+                        itemBuilder: (context, index) {
+                          final org = _orgSearchResults[index];
+                          return ListTile(
+                            dense: true,
+                            title: Text(org['name'], style: const TextStyle(fontSize: 12)),
+                            onTap: () => setState(() {
+                              _selectedOrgId = org['id'];
+                              _selectedOrgName = org['name'];
+                              _orgSearchResults = [];
+                            }),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                ],
                 if (!_isLoginMode) ...[
                   _LabTextField(
                     controller: _nameController,
@@ -150,6 +240,22 @@ class _AccessScreensState extends State<AccessScreens> {
                 const SizedBox(height: 24),
                 Center(
                   child: TextButton(
+                    onPressed: () {
+                      // Navigate to Onboarding
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const OrganizationOnboardingScreen()),
+                      );
+                    },
+                    child: Text(
+                      'REGISTER NEW ORGANIZATION',
+                      style: AppStyle.label(color: AppColors.actionAccent, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Center(
+                  child: TextButton(
                     onPressed: () => setState(() {
                       _isLoginMode = !_isLoginMode;
                       _error = null;
@@ -174,12 +280,16 @@ class _LabTextField extends StatelessWidget {
   final String label;
   final bool obscureText;
   final TextInputType? keyboardType;
+  final ValueChanged<String>? onChanged;
+  final Widget? suffixIcon;
 
   const _LabTextField({
     required this.controller,
     required this.label,
     this.obscureText = false,
     this.keyboardType,
+    this.onChanged,
+    this.suffixIcon,
   });
 
   @override
@@ -193,12 +303,14 @@ class _LabTextField extends StatelessWidget {
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
+          onChanged: onChanged,
           style: const TextStyle(fontSize: 14),
           decoration: InputDecoration(
             filled: true,
             fillColor: AppColors.foundation,
             isDense: true,
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            suffixIcon: suffixIcon,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(4),
               borderSide: const BorderSide(color: AppColors.border),

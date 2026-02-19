@@ -5,5 +5,12 @@
         "email": "admin@vbp.com",
         "password": "password123",
         "role": "manager"
+    },
+    {
+        "id": "renee_goodman",
+        "name": "Renee Goodman",
+        "email": "renee@aldervon.com",
+        "password": "password123",
+        "role": "manager"
     }
 ]

@@ -111,7 +111,7 @@ class _LogoEffect extends StatelessWidget {
           if (expanded) ...[
             const SizedBox(width: 12),
             const Text(
-              'LAB v2',
+              'LAB v3.0',
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontWeight: FontWeight.w800,

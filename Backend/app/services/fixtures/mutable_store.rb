@@ -2,6 +2,7 @@
 
 require "json"
 require "fileutils"
+require "securerandom"
 
 module Fixtures
   class MutableStore
@@ -34,6 +35,14 @@ module Fixtures
 
       def shipments
         @shipments ||= load_json("shipments.json", [])
+      end
+
+      def organizations
+        @organizations ||= load_json("organizations.json", [])
+      end
+
+      def whitelists
+        @whitelists ||= load_json("whitelists.json", {})
       end
 
       def update_inventory_item(machine_id, sku, new_qty)
@@ -79,6 +88,8 @@ module Fixtures
         @users = nil
         @central_stock = nil
         @shipments = nil
+        @organizations = nil
+        @whitelists = nil
       end
 
       def users
@@ -88,6 +99,36 @@ module Fixtures
       def add_user(user_data)
         users << user_data
         save_json("users.json", users)
+      end
+
+      def update_user(user_data)
+        idx = users.index { |u| u["id"] == user_data["id"] || u["email"] == user_data["email"] }
+        if idx
+          users[idx] = user_data
+        else
+          users << user_data
+        end
+        save_json("users.json", users)
+      end
+
+      def add_organization(org_data)
+        organizations << org_data
+        save_json("organizations.json", organizations)
+      end
+
+      def update_organization(org_data)
+        idx = organizations.index { |o| o["id"] == org_data["id"] }
+        if idx
+          organizations[idx] = org_data
+        else
+          organizations << org_data
+        end
+        save_json("organizations.json", organizations)
+      end
+
+      def update_whitelist(org_id, emails)
+        whitelists[org_id] = emails
+        save_json("whitelists.json", whitelists)
       end
 
       def save_json(name, data)

@@ -6,10 +6,12 @@ class SessionManager extends ChangeNotifier {
   final ApiClient _api = ApiClient();
   User? _currentUser;
   bool _isAuthenticated = false;
+  bool _isAdminVerified = false;
   String? _roleOverride;
 
   User? get currentUser => _currentUser;
   bool get isAuthenticated => _isAuthenticated;
+  bool get isAdminVerified => _isAdminVerified;
 
   String get actualRole => (_currentUser?.role ?? 'employee').toLowerCase().trim();
   String get effectiveRole {
@@ -22,11 +24,12 @@ class SessionManager extends ChangeNotifier {
   bool get isManager => actualRole == 'manager';
   bool get isInEmployeeView => effectiveRole != 'manager';
 
-  Future<void> login(String email, String password) async {
+  Future<void> login(String email, String password, {String? organizationId}) async {
     try {
       final response = await _api.post('/token', {
         'email': email,
         'password': password,
+        'organization_id': organizationId,
       });
       
       final userData = response['user'];
@@ -40,13 +43,14 @@ class SessionManager extends ChangeNotifier {
     }
   }
 
-  Future<void> signup(String name, String email, String password, {String role = 'employee'}) async {
+  Future<void> signup(String name, String email, String password, {String role = 'employee', String? organizationId}) async {
     try {
       final response = await _api.post('/signup', {
         'name': name,
         'email': email,
         'password': password,
         'role': role,
+        'organization_id': organizationId,
       });
 
       final userData = response['user'];
@@ -58,6 +62,45 @@ class SessionManager extends ChangeNotifier {
       debugPrint('Signup failed: $e');
       rethrow;
     }
+  }
+
+  Future<List<Map<String, dynamic>>> searchOrganizations(String query) async {
+    final response = await _api.get('/organizations/search?q=$query');
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  Future<Map<String, dynamic>> createOrganization({
+    required String name,
+    required String managerEmail,
+    required String managerPassword,
+    required String adminPassword,
+    required List<String> whitelist,
+  }) async {
+    return await _api.post('/organizations/create', {
+      'name': name,
+      'manager_email': managerEmail,
+      'manager_password': managerPassword,
+      'admin_password': adminPassword,
+      'whitelist': whitelist,
+    });
+  }
+
+  Future<bool> verifyAdmin({
+    required String organizationId,
+    required String adminPassword,
+    required String totpCode,
+  }) async {
+    final response = await _api.post('/organizations/verify_admin', {
+      'organization_id': organizationId,
+      'admin_password': adminPassword,
+      'totp_code': totpCode,
+    });
+    final verified = response['verified'] == true;
+    if (verified) {
+      _isAdminVerified = true;
+      notifyListeners();
+    }
+    return verified;
   }
 
   void setEmployeeView(bool enabled) {
@@ -78,6 +121,7 @@ class SessionManager extends ChangeNotifier {
   void logout() {
     _currentUser = null;
     _isAuthenticated = false;
+    _isAdminVerified = false;
     _roleOverride = null;
     notifyListeners();
   }

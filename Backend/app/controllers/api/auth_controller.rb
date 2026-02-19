@@ -40,10 +40,19 @@ module Api
         password = params[:password].to_s.presence || JSON.parse(request.raw_post.presence || "{}")["password"].to_s
         name = params[:name].to_s.presence || JSON.parse(request.raw_post.presence || "{}")["name"].to_s
         role = params[:role].to_s.presence || JSON.parse(request.raw_post.presence || "{}")["role"].to_s.presence || "employee"
+        org_id = params[:organization_id].to_s.presence || JSON.parse(request.raw_post.presence || "{}")["organization_id"].to_s
 
         if Fixtures::MockApi.new.find_user(email)
           render json: { detail: "User already exists" }, status: :bad_request
           return
+        end
+
+        # Multi-Tenant Whitelist Check
+        if org_id.present?
+          unless Fixtures::MockApi.new.is_whitelisted?(org_id, email)
+            render json: { detail: "Email not authorized for this organization" }, status: :forbidden
+            return
+          end
         end
 
         user = {
@@ -51,7 +60,8 @@ module Api
           "name" => name,
           "email" => email,
           "password" => password,
-          "role" => role
+          "role" => role,
+          "organization_id" => org_id
         }
 
         Fixtures::MutableStore.add_user(user)
@@ -63,12 +73,95 @@ module Api
             name: user["name"],
             email: user["email"],
             role: user["role"],
-            id: user["id"]
+            id: user["id"],
+            organization_id: user["organization_id"]
           }
         }, status: :created
       rescue => e
         Rails.logger.error "Signup Error: #{e.message}"
         render json: { detail: "Internal Server Error: #{e.message}" }, status: :internal_server_error
+      end
+    end
+
+    def search_organizations
+      query = params[:q].to_s
+      orgs = Fixtures::MockApi.new.search_organizations(query)
+      render json: orgs.map { |o| { id: o["id"], name: o["name"] } }
+    end
+
+    def create_organization
+      begin
+        # Role Validation (Manager only)
+        # We use a robust extraction to ensure JSON bodies are parsed correctly
+        raw_payload = JSON.parse(request.raw_post.presence || "{}")
+        email = params[:manager_email].to_s.presence || raw_payload["manager_email"].to_s
+        password = params[:manager_password].to_s.presence || raw_payload["manager_password"].to_s
+        
+        user = Fixtures::MockApi.new.find_user(email)
+        unless user && user["role"] == "manager" && user["password"] == password
+          render json: { detail: "Unauthorized: Manager credentials required" }, status: :unauthorized
+          return
+        end
+
+        org_name = params[:name].to_s.presence || raw_payload["name"].to_s
+        admin_password = params[:admin_password].to_s.presence || raw_payload["admin_password"].to_s
+        whitelist = (params[:whitelist] || raw_payload["whitelist"]) || []
+
+        totp_seed = ROTP::Base32.random
+        org_id = "org_#{SecureRandom.hex(4)}"
+
+        org_data = {
+          "id" => org_id,
+          "name" => org_name,
+          "admin_password" => admin_password,
+          "totp_seed" => totp_seed,
+          "manager_id" => user["id"]
+        }
+
+        Fixtures::MutableStore.add_organization(org_data)
+        Fixtures::MutableStore.update_whitelist(org_id, whitelist)
+
+        # Link manager to org
+        user["organization_id"] = org_id
+        Fixtures::MutableStore.update_user(user)
+
+        render json: {
+          organization_id: org_id,
+          totp_seed: totp_seed,
+          totp_uri: ROTP::TOTP.new(totp_seed, issuer: "VendingBackpack").provisioning_uri(user["email"])
+        }
+      rescue => e
+        render json: { detail: e.message }, status: :internal_server_error
+      end
+    end
+
+    def verify_admin
+      begin
+        org_id = params[:organization_id].to_s
+        admin_password = params[:admin_password].to_s
+        totp_code = params[:totp_code].to_s
+
+        org = Fixtures::MockApi.new.find_organization(org_id)
+        unless org
+          render json: { detail: "Organization not found" }, status: :not_found
+          return
+        end
+
+        # Dual-Key Challenge
+        password_ok = org["admin_password"] == admin_password
+        totp = ROTP::TOTP.new(org["totp_seed"])
+        totp_ok = totp.verify(totp_code, drift_behind: 30)
+
+        if password_ok && totp_ok
+          render json: { verified: true }
+        else
+          reasons = []
+          reasons << "Invalid admin password" unless password_ok
+          reasons << "Invalid TOTP code" unless totp_ok
+          render json: { verified: false, detail: reasons.join(", ") }, status: :unauthorized
+        end
+      rescue => e
+        render json: { detail: e.message }, status: :internal_server_error
       end
     end
   end

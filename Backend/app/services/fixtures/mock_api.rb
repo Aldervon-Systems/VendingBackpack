@@ -30,10 +30,31 @@ module Fixtures
       warehouse_inventory.find { |item| item["barcode"] == barcode } || {}
     end
 
+    def find_organization(id)
+      organizations.find { |o| o["id"] == id }
+    end
+
+    def search_organizations(query)
+      organizations.select { |o| o["name"].downcase.include?(query.to_s.downcase) }
+    end
+
+    def organization_whitelist(org_id)
+      Fixtures::MutableStore.whitelists[org_id] || []
+    end
+
+    def is_whitelisted?(org_id, email)
+      whitelist = Fixtures::MutableStore.whitelists[org_id.to_s] || []
+      whitelist.any? { |e| e.downcase == email.to_s.downcase }
+    end
+
     private
 
     def users
       Fixtures::MutableStore.users
+    end
+
+    def organizations
+      Fixtures::MutableStore.organizations
     end
   end
 end
