@@ -34,12 +34,22 @@ class MyApp extends StatelessWidget {
             seedColor: AppColors.actionAccent,
             surface: AppColors.surface,
           ),
-          textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme).copyWith(
-            displayLarge: AppStyle.metric(fontSize: 32, fontWeight: FontWeight.bold),
-            headlineMedium: AppStyle.metric(fontSize: 24, fontWeight: FontWeight.w600),
-            bodyMedium: AppStyle.label(fontSize: 14, color: AppColors.dataPrimary),
-            bodySmall: AppStyle.label(fontSize: 12),
-          ),
+          textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme)
+              .copyWith(
+                displayLarge: AppStyle.metric(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                ),
+                headlineMedium: AppStyle.metric(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                ),
+                bodyMedium: AppStyle.label(
+                  fontSize: 14,
+                  color: AppColors.dataPrimary,
+                ),
+                bodySmall: AppStyle.label(fontSize: 12),
+              ),
           appBarTheme: const AppBarTheme(
             backgroundColor: Colors.transparent,
             foregroundColor: AppColors.dataPrimary,
@@ -69,6 +79,16 @@ class AuthWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final session = context.watch<SessionManager>();
+    if (session.isRestoring) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColors.border,
+          ),
+        ),
+      );
+    }
     if (session.isAuthenticated) {
       return const PagesLayout();
     }
