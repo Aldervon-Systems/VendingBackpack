@@ -8,6 +8,8 @@ Rails.application.routes.draw do
     get "/organizations/search", to: "api/auth#search_organizations"
     post "/organizations/create", to: "api/auth#create_organization"
     post "/organizations/verify_admin", to: "api/auth#verify_admin"
+    post "/organizations/:organization_id/whitelist", to: "api/auth#update_whitelist"
+    post "/organizations/:organization_id/machines", to: "api/auth#add_machine"
 
     get "/warehouse", to: "api/warehouse#warehouse"
     get "/inventory", to: "api/warehouse#inventory"

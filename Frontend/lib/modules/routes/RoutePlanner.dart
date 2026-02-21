@@ -4,9 +4,19 @@ import '../../core/services/ApiClient.dart';
 
 class RoutePlanner extends ChangeNotifier {
   final ApiClient _api = ApiClient();
-  final String? restrictedEmployeeId;
+  String? _restrictedEmployeeId;
   
-  RoutePlanner({this.restrictedEmployeeId});
+  RoutePlanner({String? restrictedEmployeeId}) : _restrictedEmployeeId = restrictedEmployeeId {
+    loadRoutes();
+  }
+
+  void setRestrictedId(String? id) {
+    if (_restrictedEmployeeId == id) return;
+    _restrictedEmployeeId = id;
+    loadRoutes();
+  }
+
+  String? get restrictedEmployeeId => _restrictedEmployeeId;
 
   List<dynamic> _locations = [];
   bool _isLoading = false;

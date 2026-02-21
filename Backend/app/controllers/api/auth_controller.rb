@@ -25,7 +25,8 @@ module Api
             name: user["name"],
             email: user["email"],
             role: user["role"],
-            id: user["id"]
+            id: user["id"],
+            organization_id: user["organization_id"]
           }
         }
       rescue => e
@@ -160,6 +161,44 @@ module Api
           reasons << "Invalid TOTP code" unless totp_ok
           render json: { verified: false, detail: reasons.join(", ") }, status: :unauthorized
         end
+      rescue => e
+        render json: { detail: e.message }, status: :internal_server_error
+      end
+    end
+    def update_whitelist
+      begin
+        org_id = params[:organization_id].to_s
+        emails = params[:emails] || []
+        
+        Fixtures::MutableStore.update_whitelist(org_id, emails)
+        render json: { success: true, emails: emails }
+      rescue => e
+        render json: { detail: e.message }, status: :internal_server_error
+      end
+    end
+
+    def add_machine
+      begin
+        org_id = params[:organization_id].to_s
+        vin = params[:vin].to_s
+        name = params[:name].to_s
+        lat = params[:lat].to_f
+        lng = params[:lng].to_f
+        
+        machine = {
+          "id" => Time.now.to_i,
+          "name" => name,
+          "vin" => vin,
+          "organization_id" => org_id,
+          "status" => "online",
+          "battery" => 100,
+          "lat" => lat,
+          "lng" => lng,
+          "location" => "Registered at Base"
+        }
+        
+        Fixtures::MutableStore.add_machine(machine)
+        render json: machine
       rescue => e
         render json: { detail: e.message }, status: :internal_server_error
       end

@@ -15,7 +15,11 @@ module Fixtures
     end
 
     def locations
-      @store.read_json("locations.json")
+      static_locs = @store.read_json("locations.json") || []
+      dynamic_machines = Fixtures::MutableStore.machines.select { |m| m["lat"] && m["lng"] }
+      
+      # Map machines to location format if needed, but they seem to share lat/lng/name/id
+      static_locs + dynamic_machines
     end
 
     def warehouse_inventory

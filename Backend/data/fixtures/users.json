@@ -4,13 +4,15 @@
         "name": "Admin Manager",
         "email": "admin@vbp.com",
         "password": "password123",
-        "role": "manager"
+        "role": "manager",
+        "organization_id": "org_aldervon"
     },
     {
         "id": "renee_goodman",
         "name": "Renee Goodman",
         "email": "renee@aldervon.com",
         "password": "password123",
-        "role": "manager"
+        "role": "manager",
+        "organization_id": "org_aldervon"
     }
 ]

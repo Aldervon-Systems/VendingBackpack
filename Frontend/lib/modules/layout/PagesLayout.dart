@@ -10,6 +10,10 @@ import '../../core/styles/AppStyle.dart';
 import 'MainContent.dart';
 import 'Sidebar.dart';
 
+import '../auth/OrganizationAdminModal.dart';
+
+import '../routes/RoutePlanner.dart';
+
 class PagesLayout extends StatefulWidget {
   const PagesLayout({super.key});
 
@@ -29,6 +33,22 @@ class _PagesLayoutState extends State<PagesLayout> {
     tabs.add(const _TabSpec(label: 'Dashboard', icon: Icons.grid_view_outlined, page: DashboardHome()));
     tabs.add(const _TabSpec(label: 'Routes', icon: Icons.map_outlined, page: MapInterface()));
     tabs.add(const _TabSpec(label: 'Warehouse', icon: Icons.inventory_2_outlined, page: StockScreens()));
+    
+    // Add Admin tab for managers
+    if (session.isManager) {
+      tabs.add(_TabSpec(
+        label: 'Admin', 
+        icon: Icons.admin_panel_settings_outlined, 
+        page: const Center(child: Text('Admin Dashboard Loading...')), // Placeholder since we'll trigger a modal for now or we could make it a page
+        onTap: (context) {
+          showDialog(
+            context: context,
+            builder: (context) => const OrganizationAdminModal(),
+          );
+        }
+      ));
+    }
+    
     return tabs;
   }
 
@@ -44,6 +64,20 @@ class _PagesLayoutState extends State<PagesLayout> {
     
     final pageTitle = tabs.isNotEmpty ? tabs[safeIndex].label : 'Dashboard';
 
+    // Initialize/Sync the global RoutePlanner with the current session context
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final planner = context.read<RoutePlanner>();
+        final restrictedId = !session.isManager || session.effectiveRole == 'employee' 
+            ? session.currentUser?.id.toString() 
+            : null;
+        
+        if (planner.restrictedEmployeeId != restrictedId) {
+          planner.setRestrictedId(restrictedId);
+        }
+      }
+    });
+
     return Scaffold(
       backgroundColor: AppColors.foundation,
       body: Stack(
@@ -56,7 +90,13 @@ class _PagesLayoutState extends State<PagesLayout> {
                   expanded: false, // Will expand on hover internally
                   selectedPage: safeIndex,
                   tabs: tabs.map((t) => SidebarTab(label: t.label, icon: t.icon)).toList(),
-                  onPageSelected: (idx) => setState(() => selectedPage = idx),
+                  onPageSelected: (idx) {
+                    if (tabs[idx].onTap != null) {
+                      tabs[idx].onTap!(context);
+                    } else {
+                      setState(() => selectedPage = idx);
+                    }
+                  },
                   onSettings: () => setState(() => showSettingsOverlay = true),
                   onSignOut: () => _signOut(session),
                 ),
@@ -78,7 +118,13 @@ class _PagesLayoutState extends State<PagesLayout> {
             _MobileNav(
               tabs: tabs,
               currentIndex: safeIndex,
-              onTap: (idx) => setState(() => selectedPage = idx),
+              onTap: (idx) {
+                if (tabs[idx].onTap != null) {
+                  tabs[idx].onTap!(context);
+                } else {
+                  setState(() => selectedPage = idx);
+                }
+              },
               onSettings: () => setState(() => showSettingsOverlay = true),
             ),
           if (showSettingsOverlay)
@@ -207,7 +253,8 @@ class _TabSpec {
   final String label;
   final IconData icon;
   final Widget page;
-  const _TabSpec({required this.label, required this.icon, required this.page});
+  final Function(BuildContext)? onTap;
+  const _TabSpec({required this.label, required this.icon, required this.page, this.onTap});
 }
 
 class _SettingsOverlay extends StatelessWidget {

@@ -118,6 +118,23 @@ class SessionManager extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateWhitelist(List<String> emails) async {
+    final orgId = _currentUser?.organizationId;
+    if (orgId == null) throw Exception('No organization linked to user');
+    await _api.post('/organizations/$orgId/whitelist', {'emails': emails});
+  }
+
+  Future<void> addMachine({required String vin, required String name, required double lat, required double lng}) async {
+    final orgId = _currentUser?.organizationId;
+    if (orgId == null) throw Exception('No organization linked to user');
+    await _api.post('/organizations/$orgId/machines', {
+      'vin': vin,
+      'name': name,
+      'lat': lat,
+      'lng': lng,
+    });
+  }
+
   void logout() {
     _currentUser = null;
     _isAuthenticated = false;

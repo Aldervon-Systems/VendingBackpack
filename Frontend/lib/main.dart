@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'modules/routes/RoutePlanner.dart';
 import 'modules/auth/SessionManager.dart';
 import 'modules/auth/AccessScreens.dart';
 import 'modules/layout/PagesLayout.dart';
@@ -20,6 +21,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => SessionManager()),
         ChangeNotifierProvider(create: (_) => BusinessMetrics()),
+        ChangeNotifierProvider(create: (_) => RoutePlanner()),
       ],
       child: MaterialApp(
         title: 'VendingBackpack v3.0.0 (MT)',

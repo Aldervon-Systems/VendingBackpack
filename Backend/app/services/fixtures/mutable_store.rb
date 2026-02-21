@@ -126,14 +126,24 @@ module Fixtures
         save_json("organizations.json", organizations)
       end
 
+      def get_whitelist(org_id)
+        whitelists[org_id] || []
+      end
+
       def update_whitelist(org_id, emails)
         whitelists[org_id] = emails
         save_json("whitelists.json", whitelists)
       end
 
+      def add_machine(machine_data)
+        machines << machine_data
+        save_json("machines.json", machines)
+      end
+
       def save_json(name, data)
         path = FIXTURES_DIR.join(name)
         File.write(path, JSON.pretty_generate(data))
+        reset! # Clear memoized variables so next load is fresh
       end
 
       def load_json(name, fallback)
