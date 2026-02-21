@@ -2,7 +2,7 @@
 
 module Api
   class AuthController < ApplicationController
-    before_action :require_auth!, only: %i[update_whitelist add_machine]
+    before_action :require_auth!, only: %i[me update_whitelist add_machine]
     before_action :require_manager!, only: %i[update_whitelist add_machine]
     before_action only: %i[update_whitelist add_machine] do
       require_org_match!(params[:organization_id])
@@ -94,6 +94,19 @@ module Api
       query = params[:q].to_s
       orgs = Fixtures::MockApi.new.search_organizations(query)
       render json: orgs.map { |o| { id: o["id"], name: o["name"] } }
+    end
+
+    def me
+      user = current_user
+      render json: {
+        user: {
+          name: user["name"],
+          email: user["email"],
+          role: user["role"],
+          id: user["id"],
+          organization_id: user["organization_id"]
+        }
+      }
     end
 
     def create_organization

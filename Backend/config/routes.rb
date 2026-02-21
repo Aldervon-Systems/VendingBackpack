@@ -5,6 +5,7 @@ Rails.application.routes.draw do
   scope "/api" do
     post "/token", to: "api/auth#token"
     post "/signup", to: "api/auth#signup"
+    get "/me", to: "api/auth#me"
     get "/organizations/search", to: "api/auth#search_organizations"
     post "/organizations/create", to: "api/auth#create_organization"
     post "/organizations/verify_admin", to: "api/auth#verify_admin"
