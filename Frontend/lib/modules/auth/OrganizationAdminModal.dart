@@ -40,7 +40,13 @@ class _OrganizationAdminModalState extends State<OrganizationAdminModal> with Si
       return;
     }
 
-    setState(() => _isLoading = true);
+    final orgId = context.read<SessionManager>().currentUser?.organizationId ?? 'unknown_org';
+    debugPrint('CMD MACHINE_ADD START org=$orgId vin=${_vinController.text} name=${_nameController.text} lat=$lat lng=$lng');
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       await context.read<SessionManager>().addMachine(
         vin: _vinController.text,
@@ -54,6 +60,8 @@ class _OrganizationAdminModalState extends State<OrganizationAdminModal> with Si
         context.read<RoutePlanner>().loadRoutes();
       }
 
+      debugPrint('CMD MACHINE_ADD OK org=$orgId vin=${_vinController.text}');
+
       _vinController.clear();
       _nameController.clear();
       _latController.clear();
@@ -65,7 +73,14 @@ class _OrganizationAdminModalState extends State<OrganizationAdminModal> with Si
         );
       }
     } catch (e) {
-      setState(() => _error = e.toString());
+      final message = e.toString().replaceFirst('Exception: ', '');
+      debugPrint('CMD MACHINE_ADD FAIL org=$orgId error=$message');
+      setState(() => _error = message);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: AppColors.warning),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -247,7 +262,7 @@ class _OrganizationAdminModalState extends State<OrganizationAdminModal> with Si
   Widget _buildError() {
     return Padding(
       padding: const EdgeInsets.only(top: 16),
-      child: Text(_error!.toUpperCase(), style: AppStyle.label(color: AppColors.warning, fontWeight: FontWeight.bold)),
+      child: Text(_error!, style: AppStyle.label(color: AppColors.warning, fontWeight: FontWeight.bold)),
     );
   }
 }

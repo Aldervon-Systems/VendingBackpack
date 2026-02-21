@@ -20,7 +20,8 @@ class ApiClient {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Failed to load data: ${response.statusCode}');
+      final detail = _parseError(response);
+      throw Exception('CMD API_GET FAIL endpoint=$endpoint status=${response.statusCode} detail=$detail');
     }
   }
 
@@ -34,7 +35,7 @@ class ApiClient {
       return jsonDecode(response.body);
     } else {
       final detail = _parseError(response);
-      throw Exception(detail);
+      throw Exception('CMD API_POST FAIL endpoint=$endpoint status=${response.statusCode} detail=$detail');
     }
   }
 
@@ -48,15 +49,27 @@ class ApiClient {
       return jsonDecode(response.body);
     } else {
       final detail = _parseError(response);
-      throw Exception(detail);
+      throw Exception('CMD API_PUT FAIL endpoint=$endpoint status=${response.statusCode} detail=$detail');
     }
   }
 
   String _parseError(http.Response response) {
     try {
       final data = jsonDecode(response.body);
-      return data['detail'] ?? data['error'] ?? 'Server error: ${response.statusCode}';
+      final detail = data['detail'] ?? data['error'];
+      if (detail != null && detail.toString().trim().isNotEmpty) {
+        return detail.toString();
+      }
+      final rawBody = response.body.toString().trim();
+      if (rawBody.isNotEmpty) {
+        return rawBody;
+      }
+      return 'Server error: ${response.statusCode}';
     } catch (_) {
+      final rawBody = response.body.toString().trim();
+      if (rawBody.isNotEmpty) {
+        return rawBody;
+      }
       return 'Server error: ${response.statusCode}';
     }
   }
