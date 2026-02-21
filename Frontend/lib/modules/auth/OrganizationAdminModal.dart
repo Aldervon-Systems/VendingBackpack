@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/styles/AppStyle.dart';
 import './SessionManager.dart';
+import '../dashboard/BusinessMetrics.dart';
 import '../routes/RoutePlanner.dart';
 
 class OrganizationAdminModal extends StatefulWidget {
@@ -57,7 +58,8 @@ class _OrganizationAdminModalState extends State<OrganizationAdminModal> with Si
       
       // Refresh global network state
       if (mounted) {
-        context.read<RoutePlanner>().loadRoutes();
+        await context.read<RoutePlanner>().loadRoutes();
+        await context.read<BusinessMetrics>().loadData();
       }
 
       debugPrint('CMD MACHINE_ADD OK org=$orgId vin=${_vinController.text}');

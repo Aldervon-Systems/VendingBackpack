@@ -22,26 +22,34 @@ class BusinessMetrics extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      final emps = await _api.get('/employees');
-      if (emps is List) {
-        _employees = emps.map((e) => Employee.fromJson(e)).toList();
-      }
-
       final inv = await _api.get('/inventory');
       if (inv is Map) {
         _inventory = Map<String, List<dynamic>>.from(inv);
       }
+    } catch (e) {
+      debugPrint('Error loading inventory: $e');
+    }
 
+    try {
+      final emps = await _api.get('/employees');
+      if (emps is List) {
+        _employees = emps.map((e) => Employee.fromJson(e)).toList();
+      }
+    } catch (e) {
+      debugPrint('Error loading employees: $e');
+    }
+
+    try {
       final stats = await _api.get('/daily_stats');
       if (stats is List) {
         _dailyStats = stats;
         // Simple mock calc: just sum up everything for "today" or take the last entry
         if (_dailyStats.isNotEmpty) {
-           _revenueToday = (_dailyStats.last['amount'] as num).toDouble();
+          _revenueToday = (_dailyStats.last['amount'] as num).toDouble();
         }
       }
     } catch (e) {
-      debugPrint('Error loading dashboard data: $e');
+      debugPrint('Error loading daily stats: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -56,7 +64,9 @@ class BusinessMetrics extends ChangeNotifier {
     try {
       final routeData = await _api.get('/employees/$userId/routes');
       if (routeData is Map && routeData['stops'] is List) {
-        _userMachineIds = (routeData['stops'] as List).map((s) => s['id'].toString()).toList();
+        _userMachineIds = (routeData['stops'] as List)
+            .map((s) => s['id'].toString())
+            .toList();
         notifyListeners();
       }
     } catch (e) {
@@ -64,7 +74,11 @@ class BusinessMetrics extends ChangeNotifier {
     }
   }
 
-  Future<void> updateItemQuantity(String machineId, String sku, int newQty) async {
+  Future<void> updateItemQuantity(
+    String machineId,
+    String sku,
+    int newQty,
+  ) async {
     try {
       // Optimistic update locally
       if (_inventory.containsKey(machineId)) {
@@ -84,7 +98,6 @@ class BusinessMetrics extends ChangeNotifier {
         'sku': sku,
         'quantity': newQty,
       });
-      
     } catch (e) {
       debugPrint('Error updating item qty: $e');
     }

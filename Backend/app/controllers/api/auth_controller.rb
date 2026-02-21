@@ -217,6 +217,10 @@ module Api
         }
         
         Fixtures::MutableStore.add_machine(machine)
+        inventory = Fixtures::MutableStore.inventory
+        machine_key = machine["id"].to_s
+        inventory[machine_key] ||= []
+        Fixtures::MutableStore.save_json("inventory.json", inventory)
         render json: machine
       rescue => e
         render json: { detail: e.message }, status: :internal_server_error
