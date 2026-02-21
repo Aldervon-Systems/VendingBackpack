@@ -33,61 +33,10 @@
   <title>Vending Backpack v2.4</title>
   <link rel="manifest" href="manifest.json">
 
-  <!-- FORCE DELETE SERVICE WORKER AND CACHE, THEN LOAD APP -->
-  <script>
-    async function nukeServiceWorkers() {
-      console.log('NUKING ALL SERVICE WORKERS AND CACHES...');
-
-      // 1. Unregister ALL service workers across the whole domain
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        for (const registration of registrations) {
-          await registration.unregister();
-          console.log('Unregistered SW:', registration.scope);
-        }
-      }
-
-      // 2. Clear ALL cache storage
-      if ('caches' in window) {
-        const keys = await caches.keys();
-        for (const key of keys) {
-          await caches.delete(key);
-          console.log('Deleted Cache:', key);
-        }
-      }
-
-      // 3. Clear IndexedDB (Flutter often stores data here)
-      if ('indexedDB' in window) {
-        const databases = await window.indexedDB.databases();
-        for (const db of databases) {
-          if (db.name) {
-            window.indexedDB.deleteDatabase(db.name);
-            console.log('Deleted IndexedDB:', db.name);
-          }
-        }
-      }
-
-      // 4. Final clear wasm cache if applicable
-      // Note: This is an extra precaution
-    }
-
-    async function loadApp() {
-      await nukeServiceWorkers();
-
-      console.log('Starting app [v3.0.0-PRO-CLEAN-BOOT]...');
-      const script = document.createElement('script');
-      // Pass unique URL to force fetch of the bootstrap
-      script.src = "flutter_bootstrap.js?nocache=" + Date.now();
-      script.async = true;
-      document.body.appendChild(script);
-    }
-
-    window.addEventListener('load', loadApp);
-  </script>
 </head>
 
 <body>
-  <!-- Script injected by loadApp() -->
+  <script src="flutter_bootstrap.js" async></script>
 </body>
 
 </html>
