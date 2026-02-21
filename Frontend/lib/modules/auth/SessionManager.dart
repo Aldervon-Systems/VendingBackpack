@@ -31,6 +31,12 @@ class SessionManager extends ChangeNotifier {
         'password': password,
         'organization_id': organizationId,
       });
+
+      final accessToken = response['access_token']?.toString();
+      if (accessToken == null || accessToken.isEmpty) {
+        throw Exception('Authentication failed: missing access token');
+      }
+      ApiClient.setAccessToken(accessToken);
       
       final userData = response['user'];
       _currentUser = User.fromJson(userData);
@@ -52,6 +58,12 @@ class SessionManager extends ChangeNotifier {
         'role': role,
         'organization_id': organizationId,
       });
+
+      final accessToken = response['access_token']?.toString();
+      if (accessToken == null || accessToken.isEmpty) {
+        throw Exception('Signup failed: missing access token');
+      }
+      ApiClient.setAccessToken(accessToken);
 
       final userData = response['user'];
       _currentUser = User.fromJson(userData);
@@ -140,6 +152,7 @@ class SessionManager extends ChangeNotifier {
     _isAuthenticated = false;
     _isAdminVerified = false;
     _roleOverride = null;
+    ApiClient.clearAccessToken();
     notifyListeners();
   }
 }

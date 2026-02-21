@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 module Api
-  class WarehouseController < ApplicationController
+  class WarehouseController < Api::BaseController
+    before_action :require_manager!, only: %i[update_inventory add_stock add_shipment]
+
     def warehouse
       render json: Fixtures::MockApi.new.warehouse_inventory
     end

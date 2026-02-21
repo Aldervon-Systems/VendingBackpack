@@ -10,6 +10,10 @@ module Fixtures
       users.find { |u| u.fetch("email").downcase == email.to_s.downcase }
     end
 
+    def find_user_by_id(id)
+      users.find { |u| u["id"].to_s == id.to_s }
+    end
+
     def employees
       Fixtures::MutableStore.load_json("employees.json", [])
     end

@@ -209,44 +209,35 @@ class RoutePlanner extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      final url = Uri.parse('${ApiClient.baseUrl}/employees/$employeeId/routes/stops');
-      final response = await _api.client.put(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'stop_ids': stopIds}),
-      );
+      final updatedRoute = await _api.put('/employees/$employeeId/routes/stops', {
+        'stop_ids': stopIds,
+      });
 
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        final updatedRoute = jsonDecode(response.body);
-        
-        if (_activeEmployeeId != employeeId) return;
+      if (_activeEmployeeId != employeeId) return;
 
-        if (updatedRoute != null && updatedRoute['stops'] is List) {
-          final stops = updatedRoute['stops'] as List;
-          if (stops.length >= 2) {
-             final points = await _fetchOSRMGeometryPoints(stops);
-             
-             if (_activeEmployeeId != employeeId) return;
+      if (updatedRoute != null && updatedRoute['stops'] is List) {
+        final stops = updatedRoute['stops'] as List;
+        if (stops.length >= 2) {
+           final points = await _fetchOSRMGeometryPoints(stops);
+           
+           if (_activeEmployeeId != employeeId) return;
 
-             _allPolylines[employeeId] = {
-               'points': points,
-               'stops': stops,
-               'color': _getColorForId(employeeId)
-             };
-          } else {
-             _allPolylines[employeeId] = {
-               'points': [],
-               'stops': stops,
-               'color': _getColorForId(employeeId)
-             };
-          }
-
-          if (_activeEmployeeId == employeeId) {
-            _activeRouteStops = stops;
-          }
+           _allPolylines[employeeId] = {
+             'points': points,
+             'stops': stops,
+             'color': _getColorForId(employeeId)
+           };
+        } else {
+           _allPolylines[employeeId] = {
+             'points': [],
+             'stops': stops,
+             'color': _getColorForId(employeeId)
+           };
         }
-      } else {
-        throw Exception('Failed to update route stops: ${response.statusCode}');
+
+        if (_activeEmployeeId == employeeId) {
+          _activeRouteStops = stops;
+        }
       }
     } catch (e) {
       debugPrint('Error updating route stops: $e');

@@ -1,7 +1,12 @@
 # frozen_string_literal: true
 
 module Api
-  class EmployeesController < ApplicationController
+  class EmployeesController < Api::BaseController
+    before_action :require_manager!, only: %i[routes_index assign_route update_stops autogenerate_all]
+    before_action only: %i[show routes_for] do
+      require_self_or_manager!(params[:id])
+    end
+
     def show
       employee = Employee.find_by(id: params[:id])
       if employee

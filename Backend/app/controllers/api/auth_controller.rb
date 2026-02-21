@@ -2,6 +2,12 @@
 
 module Api
   class AuthController < ApplicationController
+    before_action :require_auth!, only: %i[update_whitelist add_machine]
+    before_action :require_manager!, only: %i[update_whitelist add_machine]
+    before_action only: %i[update_whitelist add_machine] do
+      require_org_match!(params[:organization_id])
+    end
+
     def token
       begin
         email = params[:email].to_s.presence || JSON.parse(request.raw_post.presence || "{}")["email"].to_s
@@ -19,7 +25,7 @@ module Api
         end
 
         render json: {
-          access_token: "mock_token_#{user["id"]}",
+          access_token: issue_access_token(user),
           token_type: "bearer",
           user: {
             name: user["name"],
@@ -68,7 +74,7 @@ module Api
         Fixtures::MutableStore.add_user(user)
 
         render json: {
-          access_token: "mock_token_#{user["id"]}",
+          access_token: issue_access_token(user),
           token_type: "bearer",
           user: {
             name: user["name"],
@@ -202,6 +208,18 @@ module Api
       rescue => e
         render json: { detail: e.message }, status: :internal_server_error
       end
+    end
+
+    private
+
+    def issue_access_token(user)
+      payload = {
+        "sub" => user["id"].to_s,
+        "role" => user["role"].to_s,
+        "organization_id" => user["organization_id"].to_s,
+        "exp" => Time.now.to_i + 12 * 60 * 60
+      }
+      Rails.application.message_verifier(:access_token).generate(payload)
     end
   end
 end

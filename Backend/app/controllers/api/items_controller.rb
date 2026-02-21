@@ -3,7 +3,9 @@
 require "time"
 
 module Api
-  class ItemsController < ApplicationController
+  class ItemsController < Api::BaseController
+    before_action :require_manager!, only: %i[create update destroy]
+
     def index
       render json: items
     end

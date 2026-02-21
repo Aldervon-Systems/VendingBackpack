@@ -3,7 +3,9 @@
 require "time"
 
 module Api
-  class TransactionsController < ApplicationController
+  class TransactionsController < Api::BaseController
+    before_action :require_manager!, only: %i[refund]
+
     def index
       render json: transactions
     end

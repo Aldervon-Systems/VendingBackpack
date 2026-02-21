@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Api
-  class MachinesController < ApplicationController
+  class MachinesController < Api::BaseController
     def index
       render json: machines
     end

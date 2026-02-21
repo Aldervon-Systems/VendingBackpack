@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Api
-  class RoutesController < ApplicationController
+  class RoutesController < Api::BaseController
     def routes
       render json: {
         locations: Fixtures::MockApi.new.locations,
