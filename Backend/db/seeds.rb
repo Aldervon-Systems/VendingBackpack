@@ -30,12 +30,14 @@ routes_json.each do |data|
   employee = Employee.find_by(id: data['employee_id'])
   next unless employee
 
-  route = Route.create!(
-    employee: employee,
-    employee_name: data['employee_name'],
-    distance_meters: data['distance_meters'] || 0,
-    duration_seconds: data['duration_seconds'] || 0
-  )
+  route = Route.find_or_initialize_by(employee_id: employee.id)
+  route.employee = employee
+  route.employee_name = data['employee_name']
+  route.distance_meters = data['distance_meters'] || 0
+  route.duration_seconds = data['duration_seconds'] || 0
+  route.save!
+
+  route.stops.destroy_all
 
   (data['stops'] || []).each_with_index do |stop_data, index|
     machine = Machine.find_by(id: stop_data['id'])

@@ -34,7 +34,7 @@ Rails.application.routes.draw do
     post "/transactions/:id/refund", to: "api/transactions#refund", constraints: { id: /\d+/ }
 
     get "/machines", to: "api/machines#index"
-    get "/machines/:id", to: "api/machines#show", constraints: { id: /\d+/ }
+    get "/machines/:id", to: "api/machines#show"
 
     get "/routes", to: "api/routes#routes"
     get "/employees", to: "api/routes#employees"

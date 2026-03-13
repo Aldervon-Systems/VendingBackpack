@@ -6,11 +6,12 @@ module Api
     before_action only: %i[show routes_for] do
       require_self_or_manager!(params[:id])
     end
+    before_action :ensure_employee_parity_for_self!, only: %i[routes_for]
 
     def show
       employee = Employee.find_by(id: params[:id])
       if employee
-        render json: normalize_employee(employee)
+        render json: employee.payload
       else
         render json: { detail: "Employee not found" }, status: :not_found
       end
@@ -169,6 +170,13 @@ module Api
 
     private
 
+    def ensure_employee_parity_for_self!
+      return unless current_user && current_user["role"].to_s.downcase == "employee"
+      return unless current_user["id"].to_s == params[:id].to_s
+
+      ensure_employee_parity!
+    end
+
     def update_route_distance(route)
       total_dist = 0
       stops = route.stops.reload.to_a
@@ -179,27 +187,6 @@ module Api
       end
       route.update!(distance_meters: total_dist.round(2))
     end
-
-    def dist(p1, p2)
-      Math.sqrt((p1["lat"] - p2["lat"])**2 + (p1["lng"] - p2["lng"])**2)
-    end
-
-    def normalize_employee(employee)
-      {
-        "id" => employee.id,
-        "name" => employee.name,
-        "color" => employee.color,
-        "department" => employee.department,
-        "location" => employee.location,
-        "floor" => employee.floor,
-        "building" => employee.building,
-        "is_active" => employee.is_active,
-        "created_at" => employee.created_at,
-        "updated_at" => employee.updated_at
-      }
-    end
-
-    private
 
     def dist(p1, p2)
       # p1 and p2 are expected to be hashes or model as_json results

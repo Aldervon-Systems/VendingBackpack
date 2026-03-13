@@ -1,13 +1,9 @@
 #!/bin/bash -e
 
-# If running the rails server then create or migrate existing database.
-# Fixture-backed API runs without ActiveRecord; only prepare the DB when enabled.
+# Hardened persistence always prepares the DB before boot so the mounted
+# storage volume remains the live source of truth in Docker/Portainer.
 if [ "${1}" == "./bin/rails" ] && [ "${2}" == "server" ]; then
-  if [ "${ENABLE_DATABASE:-false}" = "true" ]; then
-    ./bin/rails db:prepare
-  else
-    echo "Skipping db:prepare (ENABLE_DATABASE != true)"
-  fi
+  ./bin/rails db:prepare
 fi
 
 exec "${@}"
