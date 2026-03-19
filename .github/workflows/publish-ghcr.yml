@@ -20,7 +20,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        component: [backend, frontend]
+        include:
+          - image_name: backend
+            context: ./Backend
+            dockerfile: ./Backend/Dockerfile
+          - image_name: frontend-flutter
+            context: ./Frontend
+            dockerfile: ./Frontend/Dockerfile
+          - image_name: frontend-next
+            context: ./Frontend-Next
+            dockerfile: ./Frontend-Next/Dockerfile
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -36,7 +45,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.component }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.image_name }}
           tags: |
             type=ref,event=branch
             type=ref,event=tag
@@ -46,7 +55,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./${{ matrix.component == 'backend' && 'Backend' || 'Frontend' }}
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
           push: true
           tags: ${{ id.meta.outputs.tags }}
           labels: ${{ id.meta.outputs.labels }}
