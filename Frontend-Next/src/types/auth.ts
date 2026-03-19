@@ -5,6 +5,7 @@ export type SessionUser = {
   name: string;
   email: string;
   role: UserRole;
+  organizationId: string | null;
   organizationName: string;
 };
 
@@ -13,12 +14,14 @@ export type SessionState = {
   roleOverride: UserRole | null;
   issuedAt: string;
   expiresAt: string;
-  authMode: "mock";
+  accessToken: string;
+  authMode: "mock" | "api";
 };
 
 export type AuthCredentials = {
   email: string;
   password: string;
+  organizationId?: string;
   organizationName?: string;
   targetRole?: UserRole;
 };
@@ -27,8 +30,42 @@ export type SignupPayload = {
   name: string;
   email: string;
   password: string;
+  organizationId?: string;
   organizationName: string;
   role: UserRole;
+};
+
+export type OrganizationSummary = {
+  id: string;
+  name: string;
+};
+
+export type CreateOrganizationPayload = {
+  name: string;
+  managerEmail: string;
+  managerPassword: string;
+  adminPassword: string;
+  whitelist: string[];
+};
+
+export type CreateOrganizationResponse = {
+  organizationId: string;
+  totpSeed: string;
+  totpUri: string;
+};
+
+export type VerifyAdminPayload = {
+  organizationId: string;
+  adminPassword: string;
+  totpCode: string;
+};
+
+export type AddMachinePayload = {
+  organizationId: string;
+  vin: string;
+  name: string;
+  lat: number;
+  lng: number;
 };
 
 function isUserRole(value: unknown): value is UserRole {
@@ -53,11 +90,13 @@ export function isSessionState(value: unknown): value is SessionState {
     typeof sessionUser.id === "string" &&
     typeof sessionUser.name === "string" &&
     typeof sessionUser.email === "string" &&
+    (typeof sessionUser.organizationId === "string" || sessionUser.organizationId === null) &&
     typeof sessionUser.organizationName === "string" &&
     isUserRole(sessionUser.role) &&
     (candidate.roleOverride === null || isUserRole(candidate.roleOverride)) &&
     typeof candidate.issuedAt === "string" &&
     typeof candidate.expiresAt === "string" &&
-    candidate.authMode === "mock"
+    typeof candidate.accessToken === "string" &&
+    (candidate.authMode === "mock" || candidate.authMode === "api")
   );
 }

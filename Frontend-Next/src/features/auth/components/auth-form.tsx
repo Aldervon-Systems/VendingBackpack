@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, X, Zap } from "lucide-react";
 import { ParityCard } from "@/components/parity/parity-card";
 import { ParityButton } from "@/components/parity/parity-button";
 import { ParityField } from "@/components/parity/parity-field";
 import { useAuth } from "@/providers/auth-provider";
 import { APP_ROUTES } from "@/lib/routes";
-import type { UserRole } from "@/types/auth";
+import type { OrganizationSummary, UserRole } from "@/types/auth";
 
 type AuthFormProps = {
   mode: "login" | "signup";
@@ -17,27 +17,48 @@ type AuthFormProps = {
 
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
-  const { login, signup, sessionExpired } = useAuth();
+  const { login, signup, searchOrganizations, sessionExpired } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [role, setRole] = useState<UserRole>("employee");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrganization, setSelectedOrganization] = useState<{ id: string; name: string } | null>(null);
+  const [organizationResults, setOrganizationResults] = useState<OrganizationSummary[]>([]);
   const [formState, setFormState] = useState({
     name: "",
     email: "",
     password: "",
   });
 
-  const organizations = [
-    { id: "org_aldervon", name: "Aldervon Systems" },
-    { id: "org_atlas", name: "Atlas Foods" },
-    { id: "org_boston", name: "Boston Beverage Lab" },
-  ];
+  useEffect(() => {
+    let active = true;
 
-  const organizationResults =
-    selectedOrganization || searchQuery.trim().length < 2
-      ? []
-      : organizations.filter((organization) => organization.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    async function runSearch() {
+      if (selectedOrganization || searchQuery.trim().length < 2) {
+        setOrganizationResults([]);
+        return;
+      }
+
+      try {
+        const results = await searchOrganizations(searchQuery.trim());
+        if (active) {
+          setOrganizationResults(results);
+        }
+      } catch {
+        if (active) {
+          setOrganizationResults([]);
+        }
+      }
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      void runSearch();
+    }, 180);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timeoutId);
+    };
+  }, [searchOrganizations, searchQuery, selectedOrganization]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -48,6 +69,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         await login({
           email: formState.email,
           password: formState.password,
+          organizationId: selectedOrganization?.id,
           organizationName: selectedOrganization?.name || searchQuery,
         });
       } else {
@@ -55,6 +77,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           name: formState.name || "New Team Member",
           email: formState.email,
           password: formState.password,
+          organizationId: selectedOrganization?.id,
           organizationName: selectedOrganization?.name || searchQuery || "Aldervon Systems",
           role,
         });

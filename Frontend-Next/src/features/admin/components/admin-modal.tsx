@@ -7,10 +7,12 @@ import { ParityButton } from "@/components/parity/parity-button";
 import { ParityField } from "@/components/parity/parity-field";
 import { ParityModalFrame } from "@/components/parity/parity-modal-frame";
 import { ParityOverlay } from "@/components/parity/parity-overlay";
+import { useAuth } from "@/providers/auth-provider";
 import { APP_ROUTES } from "@/lib/routes";
 
 export function AdminModal() {
   const router = useRouter();
+  const { session, addMachine, updateWhitelist } = useAuth();
   const [tab, setTab] = useState<"machines" | "whitelist">("machines");
   const [machineName, setMachineName] = useState("");
   const [vin, setVin] = useState("");
@@ -18,6 +20,8 @@ export function AdminModal() {
   const [lng, setLng] = useState("-71.0589");
   const [newEmail, setNewEmail] = useState("");
   const [whitelist, setWhitelist] = useState(["ops@aldervon.com", "warehouse@aldervon.com"]);
+  const [error, setError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   function close() {
     router.back();
@@ -26,6 +30,60 @@ export function AdminModal() {
         router.replace(APP_ROUTES.dashboard);
       }
     }, 0);
+  }
+
+  async function handleAddMachine() {
+    const organizationId = session?.user.organizationId;
+    if (!organizationId) {
+      setError("No organization linked to session");
+      return;
+    }
+
+    const latitude = Number.parseFloat(lat);
+    const longitude = Number.parseFloat(lng);
+
+    if (!machineName.trim() || !vin.trim() || Number.isNaN(latitude) || Number.isNaN(longitude)) {
+      setError("Provide valid machine details");
+      return;
+    }
+
+    setIsSaving(true);
+    setError("");
+
+    try {
+      await addMachine({
+        organizationId,
+        vin,
+        name: machineName,
+        lat: latitude,
+        lng: longitude,
+      });
+      setMachineName("");
+      setVin("");
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Machine creation failed");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleSaveWhitelist() {
+    const organizationId = session?.user.organizationId;
+    if (!organizationId) {
+      setError("No organization linked to session");
+      return;
+    }
+
+    setIsSaving(true);
+    setError("");
+
+    try {
+      await updateWhitelist(organizationId, whitelist);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Whitelist update failed");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -66,7 +124,9 @@ export function AdminModal() {
               <MapPin size={14} />
               <span>USE DEMO HUB COORDS</span>
             </button>
-            <ParityButton fullWidth>REGISTER AS NETWORK NODE</ParityButton>
+            <ParityButton fullWidth onClick={handleAddMachine} disabled={isSaving}>
+              {isSaving ? "WORKING..." : "REGISTER AS NETWORK NODE"}
+            </ParityButton>
           </div>
         ) : (
           <div className="modal-form">
@@ -106,11 +166,12 @@ export function AdminModal() {
                 </div>
               ))}
             </div>
-            <ParityButton tone="dark" fullWidth>
-              SAVE WHITELIST
+            <ParityButton tone="dark" fullWidth onClick={handleSaveWhitelist} disabled={isSaving}>
+              {isSaving ? "WORKING..." : "SAVE WHITELIST"}
             </ParityButton>
           </div>
         )}
+        {error ? <div className="form-error form-error--compact">{error.toUpperCase()}</div> : null}
       </ParityModalFrame>
     </ParityOverlay>
   );

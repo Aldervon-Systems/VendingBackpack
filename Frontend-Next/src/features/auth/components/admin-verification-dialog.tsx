@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ParityButton } from "@/components/parity/parity-button";
 import { ParityField } from "@/components/parity/parity-field";
 import { ParityModalFrame } from "@/components/parity/parity-modal-frame";
+import { useAuth } from "@/providers/auth-provider";
 
 type AdminVerificationDialogProps = {
   onClose: () => void;
@@ -11,18 +12,39 @@ type AdminVerificationDialogProps = {
 };
 
 export function AdminVerificationDialog({ onClose, onVerified }: AdminVerificationDialogProps) {
+  const { session, verifyAdmin } = useAuth();
   const [adminPassword, setAdminPassword] = useState("");
   const [totpCode, setTotpCode] = useState("");
   const [error, setError] = useState("");
 
-  function verify() {
+  async function verify() {
     if (!adminPassword.trim() || !totpCode.trim()) {
       setError("Provide both credentials");
       return;
     }
 
-    setError("");
-    onVerified();
+    const organizationId = session?.user.organizationId;
+    if (!organizationId) {
+      setError("No organization linked to session");
+      return;
+    }
+
+    try {
+      const verified = await verifyAdmin({
+        organizationId,
+        adminPassword,
+        totpCode,
+      });
+
+      if (verified) {
+        setError("");
+        onVerified();
+      } else {
+        setError("Verification failed");
+      }
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Verification failed");
+    }
   }
 
   return (

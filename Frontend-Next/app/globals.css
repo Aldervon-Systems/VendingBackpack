@@ -166,6 +166,40 @@ button {
   color: var(--text);
 }
 
+@keyframes motion-overlay-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes motion-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes motion-sheet-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .parity-field {
   display: grid;
   gap: 6px;
@@ -221,6 +255,7 @@ button {
   place-items: center;
   padding: 24px;
   background: rgba(15, 23, 42, 0.38);
+  animation: motion-overlay-enter 120ms ease-out;
 }
 
 .parity-overlay--sheet {
@@ -237,6 +272,8 @@ button {
   border: 1px solid var(--border);
   border-radius: var(--radius-modal);
   box-shadow: var(--shadow-md);
+  animation: motion-panel-enter 160ms ease-out;
+  transform-origin: center bottom;
 }
 
 .parity-modal__header {
@@ -292,6 +329,7 @@ button {
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-sm);
+  animation: motion-panel-enter 160ms ease-out;
 }
 
 .spinner {
@@ -317,6 +355,7 @@ button {
   padding: 40px;
   display: grid;
   gap: 24px;
+  animation: motion-panel-enter 160ms ease-out;
 }
 
 .auth-logo {
@@ -416,6 +455,24 @@ button {
   text-transform: uppercase;
 }
 
+.form-error--compact {
+  margin-top: 8px;
+}
+
+.form-error--floating {
+  position: fixed;
+  left: 50%;
+  bottom: 108px;
+  z-index: 70;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 10px 14px;
+  border: 1px solid rgba(244, 63, 94, 0.18);
+  border-radius: var(--radius-row);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: var(--shadow-sm);
+  transform: translateX(-50%);
+}
+
 .auth-links {
   display: grid;
   justify-items: center;
@@ -488,6 +545,30 @@ button {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  animation: motion-panel-enter 180ms ease-out;
+}
+
+.totp-seed-block {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-row);
+  background: var(--foundation);
+}
+
+.totp-seed-block__value {
+  overflow-x: auto;
+  margin: 0;
+  font-family: "SFMono-Regular", ui-monospace, "Cascadia Mono", "Segoe UI Mono", monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.totp-seed-block__uri {
+  word-break: break-all;
+  font-size: 11px;
 }
 
 .onboarding-step-title {
@@ -732,6 +813,7 @@ button {
 .settings-panel__sheet {
   padding: 24px;
   border-radius: var(--radius-modal);
+  animation: motion-panel-enter 160ms ease-out;
 }
 
 .settings-panel__header,
@@ -987,6 +1069,8 @@ button {
   border-radius: var(--radius-modal);
   background: var(--surface);
   box-shadow: var(--shadow-md);
+  animation: motion-sheet-enter 160ms ease-out;
+  transform-origin: center bottom;
 }
 
 .routes-sheet--employee {
@@ -1082,6 +1166,53 @@ button {
   color: var(--surface);
   box-shadow: var(--shadow-md);
   cursor: pointer;
+  animation: motion-panel-enter 140ms ease-out;
+}
+
+.warehouse-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.warehouse-list__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+}
+
+.warehouse-list__name {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.warehouse-list__meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.warehouse-list__qty {
+  display: grid;
+  justify-items: end;
+}
+
+.warehouse-list__qty strong {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.warehouse-list__qty span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.08em;
 }
 
 .sheet-panel {
@@ -1091,6 +1222,8 @@ button {
   border-radius: 12px 12px 0 0;
   background: var(--foundation);
   box-shadow: var(--shadow-md);
+  animation: motion-sheet-enter 160ms ease-out;
+  transform-origin: center bottom;
 }
 
 .sheet-panel__header {
@@ -1149,6 +1282,7 @@ button {
 
 .admin-modal {
   width: min(100%, 500px);
+  animation: motion-panel-enter 160ms ease-out;
 }
 
 .admin-tabs {
@@ -1226,7 +1360,7 @@ button {
     position: fixed;
     left: 16px;
     right: 16px;
-    bottom: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
     z-index: 60;
     display: flex;
     gap: 8px;
@@ -1285,7 +1419,7 @@ button {
 
   .warehouse-fab {
     right: 20px;
-    bottom: 100px;
+    bottom: calc(100px + env(safe-area-inset-bottom));
   }
 
   .sheet-panel {
@@ -1330,5 +1464,32 @@ button {
   .warehouse-fab {
     width: 64px;
     height: 64px;
+  }
+
+  .form-error--floating {
+    bottom: calc(104px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .parity-overlay,
+  .parity-modal,
+  .loading-card,
+  .auth-card,
+  .onboarding-card,
+  .settings-panel__sheet,
+  .routes-sheet,
+  .sheet-panel,
+  .warehouse-fab,
+  .admin-modal {
+    animation: none !important;
+  }
+
+  .app-rail,
+  .app-rail__wordmark,
+  .app-nav__label,
+  .parity-button,
+  .mobile-nav__item {
+    transition: none !important;
   }
 }

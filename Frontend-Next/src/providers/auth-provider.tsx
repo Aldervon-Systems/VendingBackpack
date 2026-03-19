@@ -1,8 +1,18 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { MockAuthRepository } from "@/lib/api/mock/mock-auth-repository";
-import type { AuthCredentials, SessionState, SignupPayload, UserRole } from "@/types/auth";
+import { ApiAuthRepository } from "@/lib/api/repositories/api-auth-repository";
+import type {
+  AddMachinePayload,
+  AuthCredentials,
+  CreateOrganizationPayload,
+  CreateOrganizationResponse,
+  OrganizationSummary,
+  SessionState,
+  SignupPayload,
+  UserRole,
+  VerifyAdminPayload,
+} from "@/types/auth";
 
 type AuthContextValue = {
   session: SessionState | null;
@@ -15,9 +25,14 @@ type AuthContextValue = {
   signup: (payload: SignupPayload) => Promise<void>;
   logout: () => Promise<void>;
   setEmployeeView: (enabled: boolean) => Promise<void>;
+  searchOrganizations: (query: string) => Promise<OrganizationSummary[]>;
+  createOrganization: (payload: CreateOrganizationPayload) => Promise<CreateOrganizationResponse>;
+  verifyAdmin: (payload: VerifyAdminPayload) => Promise<boolean>;
+  updateWhitelist: (organizationId: string, emails: string[]) => Promise<void>;
+  addMachine: (payload: AddMachinePayload) => Promise<void>;
 };
 
-const authRepository = new MockAuthRepository();
+const authRepository = new ApiAuthRepository();
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -73,6 +88,21 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
       async setEmployeeView(enabled) {
         const nextSession = await authRepository.setRoleOverride(enabled ? "employee" : null);
         setSession(nextSession);
+      },
+      searchOrganizations(query) {
+        return authRepository.searchOrganizations(query);
+      },
+      createOrganization(payload) {
+        return authRepository.createOrganization(payload);
+      },
+      verifyAdmin(payload) {
+        return authRepository.verifyAdmin(payload);
+      },
+      updateWhitelist(organizationId, emails) {
+        return authRepository.updateWhitelist(organizationId, emails);
+      },
+      addMachine(payload) {
+        return authRepository.addMachine(payload);
       },
     };
   }, [isRestoring, session, sessionExpired]);

@@ -30,7 +30,8 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
     setAdminVerified,
   } = useShell();
   const navItems = getNavItems(effectiveRole);
-  const pageTitle = pageTitles[pathname] ?? "Workspace";
+  const normalizedPath = pathname.endsWith("/") && pathname !== "/" ? pathname.slice(0, -1) : pathname;
+  const pageTitle = pageTitles[normalizedPath] ?? "Workspace";
 
   return (
     <div className="shell-page">
@@ -45,7 +46,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
 
           <nav className="app-nav">
             {navItems.map(({ href, icon: Icon, label }) => (
-              <Link key={href} href={href} className="app-nav__item" data-active={pathname === href}>
+              <Link key={href} href={href} className="app-nav__item" data-active={normalizedPath === href}>
                 <Icon size={20} />
                 <span className="app-nav__label">{label}</span>
               </Link>
@@ -96,7 +97,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
 
       <nav className="mobile-nav">
         {navItems.map(({ href, icon: Icon, label }) => (
-          <Link key={href} href={href} className="mobile-nav__item" data-active={pathname === href}>
+          <Link key={href} href={href} className="mobile-nav__item" data-active={normalizedPath === href}>
             <Icon size={18} />
             <span>{label}</span>
           </Link>
