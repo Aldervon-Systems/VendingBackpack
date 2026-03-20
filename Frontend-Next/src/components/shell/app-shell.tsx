@@ -13,6 +13,7 @@ import { useShell } from "@/providers/shell-provider";
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
+  "/corporate": "Corporate",
   "/routes": "Routes",
   "/warehouse": "Warehouse",
   "/admin": "Admin",

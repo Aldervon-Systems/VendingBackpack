@@ -2,6 +2,12 @@
 
 This document defines the exact deployment cutover from the current Flutter web frontend to the Next web frontend.
 
+The production delivery model is static-exported Next content served by nginx, matching the current Flutter frontend contract:
+- `next build` exports static assets into `out/`
+- the image copies those assets into `/Deploy/frontend/`
+- nginx serves the static frontend and proxies `/api/*` and `/health`
+- Portainer pulls a pinned GHCR image; it does not build from source
+
 ## Live contracts that must not change
 
 - Public frontend URL remains `http://<host>:9100`
@@ -41,6 +47,23 @@ Preview validation URLs:
 - `http://localhost:9101/warehouse`
 - `http://localhost:9101/admin`
 - `http://localhost:9101/health`
+
+## Portainer production stack
+
+Use [deploy/portainer-stack.yml](/Users/crimsonwheeler/Documents/GitHub/VendingBackpack/deploy/portainer-stack.yml) as the Portainer stack source of truth.
+
+Required Portainer environment variables:
+- `SECRET_KEY_BASE=<production secret>`
+- `FRONTEND_IMAGE=ghcr.io/aldervon-systems/vendingbackpack/frontend-next:sha-<approved-shortsha>`
+
+Optional Portainer environment variable:
+- `BACKEND_IMAGE=ghcr.io/aldervon-systems/vendingbackpack/backend:latest`
+
+The live service contract stays:
+- `frontend` serves the app on `9100:80`
+- browser API traffic stays same-origin on `/api/*`
+- nginx proxies `/health` to the Rails backend
+- rollback is a single `FRONTEND_IMAGE` swap
 
 ## Live cutover on port 9100
 
@@ -82,6 +105,6 @@ docker compose -f docker-compose.yml -f docker-compose.frontend-next-preview.yml
 
 ## Notes
 
-- `docker-compose.yml` is left safe for current local use by defaulting `FRONTEND_IMAGE` to the current Flutter image.
+- `docker-compose.yml` is left safe for current local use by defaulting `FRONTEND_IMAGE` to `frontend-flutter:latest`.
 - The preview compose file forces an explicit `FRONTEND_NEXT_IMAGE` value so the candidate tag is always deliberate.
 - The frontend container healthcheck accepts either the new `__frontend_health` artifact or the existing `/health` path, which allows the base compose file to work before and after cutover.

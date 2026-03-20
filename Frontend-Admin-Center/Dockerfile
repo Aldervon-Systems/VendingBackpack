@@ -7,8 +7,8 @@ RUN npm ci
 COPY . .
 
 RUN npm run build
-RUN mkdir -p /Deploy/frontend && cp -R out/* /Deploy/frontend/
+RUN mkdir -p /Deploy/admin-center && cp -R out/* /Deploy/admin-center/
 
 FROM nginx:stable-alpine
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /Deploy/frontend/ /usr/share/nginx/html/
+COPY --from=build /Deploy/admin-center/ /usr/share/nginx/html/

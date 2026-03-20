@@ -1,4 +1,4 @@
-import { LayoutGrid, Map, ShieldCheck, Warehouse } from "lucide-react";
+import { BarChart3, LayoutGrid, Map, ShieldCheck, Warehouse } from "lucide-react";
 import { APP_ROUTES } from "@/lib/routes";
 import type { UserRole } from "@/types/auth";
 
@@ -16,6 +16,7 @@ export function getNavItems(role: UserRole | null): NavItem[] {
   ];
 
   if (role === "manager") {
+    items.splice(1, 0, { href: APP_ROUTES.corporate, label: "Corporate", icon: BarChart3 });
     items.push({ href: APP_ROUTES.admin, label: "Admin", icon: ShieldCheck });
   }
 

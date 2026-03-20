@@ -7,6 +7,7 @@ export const APP_ROUTES = {
   onboardingStep3: "/auth/onboarding/step-3",
   onboardingStep4: "/auth/onboarding/step-4",
   dashboard: "/dashboard",
+  corporate: "/corporate",
   routes: "/routes",
   warehouse: "/warehouse",
   admin: "/admin",

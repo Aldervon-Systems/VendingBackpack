@@ -14,15 +14,7 @@ function getRuntimeApiBase() {
     return envBase.replace(/\/$/, "");
   }
 
-  if (typeof window === "undefined") {
-    return "http://localhost:9090/api";
-  }
-
-  if (window.location.hostname === "localhost" && window.location.port === "3002") {
-    return "http://localhost:9090/api";
-  }
-
-  return `${window.location.origin}/api`;
+  return "/api";
 }
 
 function normalizePath(path: string) {
@@ -103,7 +95,6 @@ export async function apiRequest<T>(path: string, options?: RequestOptions): Pro
 
   const response = await fetch(`${getRuntimeApiBase()}${normalizedPath}`, {
     ...options,
-    credentials: "include",
     headers,
     body,
   });

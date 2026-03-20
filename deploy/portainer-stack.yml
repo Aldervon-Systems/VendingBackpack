@@ -1,0 +1,34 @@
+services:
+  backend:
+    image: ${BACKEND_IMAGE:-ghcr.io/aldervon-systems/vendingbackpack/backend:latest}
+    container_name: vending_backpack_backend
+    restart: unless-stopped
+    environment:
+      RAILS_ENV: production
+      PORT: 9090
+      BINDING: 0.0.0.0
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:?Set SECRET_KEY_BASE in Portainer}
+    ports:
+      - "9090:9090"
+    volumes:
+      - backend_storage:/rails/storage
+
+  frontend:
+    image: ${FRONTEND_IMAGE:?Set FRONTEND_IMAGE to ghcr.io/aldervon-systems/vendingbackpack/frontend-next:sha-<approved-shortsha>}
+    container_name: vending_frontend
+    restart: unless-stopped
+    ports:
+      - "9100:80"
+    depends_on:
+      - backend
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -q -O - http://localhost/__frontend_health >/dev/null 2>&1 || wget -q -O - http://localhost/health >/dev/null 2>&1
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  backend_storage:

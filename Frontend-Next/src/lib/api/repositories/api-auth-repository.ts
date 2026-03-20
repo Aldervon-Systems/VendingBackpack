@@ -22,7 +22,8 @@ function createSessionState({
   user,
   roleOverride = null,
   authMode = "api",
-}: Pick<SessionState, "accessToken" | "user" | "roleOverride" | "authMode">): SessionState {
+}: Pick<SessionState, "accessToken" | "user"> &
+  Partial<Pick<SessionState, "roleOverride" | "authMode">>): SessionState {
   return {
     accessToken,
     user,

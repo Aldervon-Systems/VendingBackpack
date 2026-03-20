@@ -19,6 +19,7 @@ Rails.application.routes.draw do
     get "/warehouse/shipments", to: "api/warehouse#get_shipments"
     post "/warehouse/shipments", to: "api/warehouse#add_shipment"
     get "/daily_stats", to: "api/warehouse#daily_stats"
+    get "/corporate", to: "api/corporate#show"
 
     get "/items", to: "api/items#index"
     post "/items", to: "api/items#create"

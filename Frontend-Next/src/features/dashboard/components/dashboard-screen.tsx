@@ -94,8 +94,9 @@ export function DashboardScreen() {
 
   useEffect(() => {
     let active = true;
+    const role = effectiveRole;
 
-    if (!effectiveRole) {
+    if (!role) {
       return;
     }
 
@@ -108,14 +109,14 @@ export function DashboardScreen() {
           apiRequest<Array<{ id: string; name: string; status?: string }>>("/machines"),
         ]);
 
-        const liveSnapshot = buildLiveSnapshot(effectiveRole, inventory ?? {}, employees ?? [], dailyStats ?? [], machines ?? []);
-        const nextSnapshot = liveSnapshot ?? (await fallbackRepository.getSnapshot(effectiveRole));
+        const liveSnapshot = buildLiveSnapshot(role!, inventory ?? {}, employees ?? [], dailyStats ?? [], machines ?? []);
+        const nextSnapshot = liveSnapshot ?? (await fallbackRepository.getSnapshot(role!));
 
         if (active) {
           setSnapshot(nextSnapshot);
         }
       } catch {
-        const fallbackSnapshot = await fallbackRepository.getSnapshot(effectiveRole);
+        const fallbackSnapshot = await fallbackRepository.getSnapshot(role!);
         if (active) {
           setSnapshot(fallbackSnapshot);
         }

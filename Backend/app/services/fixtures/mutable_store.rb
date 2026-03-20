@@ -45,6 +45,10 @@ module Fixtures
         @whitelists ||= load_json("whitelists.json", {})
       end
 
+      def corporate_snapshots
+        @corporate_snapshots ||= load_json("corporate_snapshots.json", {})
+      end
+
       def update_inventory_item(machine_id, sku, new_qty)
         return unless inventory[machine_id]
         item = inventory[machine_id].find { |i| i["sku"] == sku }
@@ -90,6 +94,7 @@ module Fixtures
         @shipments = nil
         @organizations = nil
         @whitelists = nil
+        @corporate_snapshots = nil
       end
 
       def users
