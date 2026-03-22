@@ -2,11 +2,10 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/providers/auth-provider";
-import { LoadingScreen } from "@/components/primitives/loading-screen";
 import { APP_ROUTES } from "@/lib/routes";
+import { useAuth } from "@/providers/auth-provider";
 
-export default function HomePage() {
+export function useAuthGuard(_options?: { managerOnly?: boolean }) {
   const router = useRouter();
   const { isAuthenticated, isRestoring } = useAuth();
 
@@ -15,8 +14,10 @@ export default function HomePage() {
       return;
     }
 
-    router.replace(isAuthenticated ? APP_ROUTES.overview : APP_ROUTES.login);
+    if (!isAuthenticated) {
+      router.replace(APP_ROUTES.login);
+    }
   }, [isAuthenticated, isRestoring, router]);
 
-  return <LoadingScreen label="Preparing your workspace" />;
+  return { isAuthenticated, isRestoring };
 }
