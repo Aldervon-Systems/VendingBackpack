@@ -1,0 +1,47 @@
+{
+  "org_aldervon": {
+    "meta": {
+      "reportingPeriod": "January-March 2026",
+      "machineCount": 18
+    },
+    "revenueBudgetSeries": [
+      { "period": "Jan", "budget": 103500, "revenue": 105920 },
+      { "period": "Feb", "budget": 101000, "revenue": 98740 },
+      { "period": "Mar", "budget": 108400, "revenue": 112860 },
+      { "period": "Apr", "budget": 110800, "revenue": 109420 },
+      { "period": "May", "budget": 113200, "revenue": 116540 }
+    ],
+    "profitSeries": [
+      { "machineId": "M-114", "machineName": "City Hall", "location": "Boston City Hall", "revenue": 18820, "estimatedCost": 6320, "grossProfit": 12500, "marginPercent": 66.4 },
+      { "machineId": "M-101", "machineName": "Union Station", "location": "Union Station", "revenue": 17420, "estimatedCost": 6010, "grossProfit": 11410, "marginPercent": 65.5 },
+      { "machineId": "M-120", "machineName": "North Campus", "location": "North Campus", "revenue": 16690, "estimatedCost": 5925, "grossProfit": 10765, "marginPercent": 64.5 },
+      { "machineId": "M-126", "machineName": "Harbor Point", "location": "Harbor Point", "revenue": 15940, "estimatedCost": 5870, "grossProfit": 10070, "marginPercent": 63.2 },
+      { "machineId": "M-109", "machineName": "State Complex", "location": "State Complex", "revenue": 15210, "estimatedCost": 5690, "grossProfit": 9520, "marginPercent": 62.6 }
+    ],
+    "rollingSalesSeries": [
+      { "period": "Wk 1", "averageSales": 11840, "forecastSales": null },
+      { "period": "Wk 2", "averageSales": 11990, "forecastSales": null },
+      { "period": "Wk 3", "averageSales": 12140, "forecastSales": null },
+      { "period": "Wk 4", "averageSales": 12320, "forecastSales": null },
+      { "period": "Wk 5", "averageSales": 12480, "forecastSales": null },
+      { "period": "Wk 6", "averageSales": null, "forecastSales": 12640 },
+      { "period": "Wk 7", "averageSales": null, "forecastSales": 12820 },
+      { "period": "Wk 8", "averageSales": null, "forecastSales": 12960 }
+    ],
+    "budgetVarianceRows": [
+      { "period": "Jan", "budget": 103500, "revenue": 105920, "variance": 2420, "variancePercent": 2.3 },
+      { "period": "Feb", "budget": 101000, "revenue": 98740, "variance": -2260, "variancePercent": -2.2 },
+      { "period": "Mar", "budget": 108400, "revenue": 112860, "variance": 4460, "variancePercent": 4.1 },
+      { "period": "Apr", "budget": 110800, "revenue": 109420, "variance": -1380, "variancePercent": -1.2 },
+      { "period": "May", "budget": 113200, "revenue": 116540, "variance": 3340, "variancePercent": 3.0 }
+    ],
+    "machineProfitRows": [
+      { "machineId": "M-114", "machineName": "City Hall", "location": "Boston City Hall", "revenue": 18820, "estimatedCost": 6320, "grossProfit": 12500, "marginPercent": 66.4 },
+      { "machineId": "M-101", "machineName": "Union Station", "location": "Union Station", "revenue": 17420, "estimatedCost": 6010, "grossProfit": 11410, "marginPercent": 65.5 },
+      { "machineId": "M-120", "machineName": "North Campus", "location": "North Campus", "revenue": 16690, "estimatedCost": 5925, "grossProfit": 10765, "marginPercent": 64.5 },
+      { "machineId": "M-126", "machineName": "Harbor Point", "location": "Harbor Point", "revenue": 15940, "estimatedCost": 5870, "grossProfit": 10070, "marginPercent": 63.2 },
+      { "machineId": "M-109", "machineName": "State Complex", "location": "State Complex", "revenue": 15210, "estimatedCost": 5690, "grossProfit": 9520, "marginPercent": 62.6 },
+      { "machineId": "M-133", "machineName": "Riverside Labs", "location": "Riverside Labs", "revenue": 14780, "estimatedCost": 5625, "grossProfit": 9155, "marginPercent": 61.9 }
+    ]
+  }
+}

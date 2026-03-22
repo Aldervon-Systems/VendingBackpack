@@ -1,0 +1,18 @@
+services:
+  frontend_next_candidate:
+    image: ${FRONTEND_NEXT_IMAGE:?Set FRONTEND_NEXT_IMAGE to ghcr.io/aldervon-systems/vendingbackpack/frontend-next:sha-<approved-shortsha>}
+    container_name: vending_frontend_next_candidate
+    restart: unless-stopped
+    ports:
+      - "9101:80"
+    depends_on:
+      - backend
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -q -O - http://localhost/__frontend_health >/dev/null 2>&1
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+

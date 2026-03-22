@@ -80,26 +80,15 @@ class BusinessMetrics extends ChangeNotifier {
     int newQty,
   ) async {
     try {
-      // Optimistic update locally
-      if (_inventory.containsKey(machineId)) {
-        final items = _inventory[machineId]!;
-        for (var item in items) {
-          if (item['sku'] == sku) {
-            item['qty'] = newQty;
-            break;
-          }
-        }
-      }
-      notifyListeners();
-
-      // API Call
       await _api.post('/warehouse/update', {
         'machine_id': machineId,
         'sku': sku,
         'quantity': newQty,
       });
+      await loadData();
     } catch (e) {
       debugPrint('Error updating item qty: $e');
+      await loadData();
     }
   }
 }

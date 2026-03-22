@@ -1,223 +1,39 @@
 # Portainer Deployment Guide
 
-This guide walks you through deploying the VendingBackpack application with PostgreSQL database using Portainer.
+This repository now ships a single GHCR-based Portainer stack contract for the web app and backend.
 
-## Architecture Overview
+Use these as the current sources of truth:
+- [deploy/portainer-stack.yml](/Users/crimsonwheeler/Documents/GitHub/VendingBackpack/deploy/portainer-stack.yml)
+- [FRONTEND_NEXT_CUTOVER.md](/Users/crimsonwheeler/Documents/GitHub/VendingBackpack/Docs/FRONTEND_NEXT_CUTOVER.md)
 
-The deployment consists of two separate Docker containers:
-- **PostgreSQL Container**: Persistent database with named volume for data storage
-- **Backend Container**: Flutter backend application that connects to PostgreSQL
+## Current deployment model
 
-Both containers communicate via a dedicated Docker network.
+- `frontend` is an nginx container on `9100:80`
+- the frontend image is a static-exported build
+- browser API traffic stays same-origin on `/api/*`
+- nginx proxies `/api/*` and `/health` to `backend:9090`
+- Portainer should pull GHCR images; it should not build the Next app from source
 
-## Prerequisites
+## Required Portainer variables
 
-- Access to Portainer web interface
-- Docker Compose file (see below)
-- Backend Docker image built and available
+- `SECRET_KEY_BASE=<production secret>`
+- `FRONTEND_IMAGE=ghcr.io/aldervon-systems/vendingbackpack/frontend-next:sha-<approved-shortsha>`
 
-## Deployment Method 1: Docker Compose Stack (Recommended)
+Optional:
+- `BACKEND_IMAGE=ghcr.io/aldervon-systems/vendingbackpack/backend:latest`
 
-This is the easiest method and allows you to manage both containers as a single unit.
+## Validation
 
-### Step 1: Prepare the Docker Compose File
+After deploy, verify:
+- `https://app.aldervon.com/__frontend_health`
+- `https://app.aldervon.com/health`
+- `https://app.aldervon.com/auth/login`
+- `https://app.aldervon.com/dashboard`
 
-Create a `docker-compose.yml` file in your project root (already provided in this repository).
+## Notes
 
-### Step 2: Deploy the Stack in Portainer
-
-1. **Log into Portainer**
-   - Navigate to your Portainer instance in your web browser
-   - Log in with your credentials
-
-2. **Navigate to Stacks**
-   - Click on **Stacks** in the left sidebar
-   - Click **+ Add stack** button
-
-3. **Configure the Stack**
-   - **Name**: `vending-backpack`
-   - **Build method**: Choose one of the following:
-     - **Web editor**: Copy and paste the contents of `docker-compose.yml`
-     - **Upload**: Upload the `docker-compose.yml` file
-     - **Repository**: Connect to your Git repository (recommended for updates)
-
-4. **Set Environment Variables**
-   
-   Scroll down to the **Environment variables** section and add:
-   
-   | Name | Value |
-   |------|-------|
-   | `DB_PASSWORD` | Your secure database password |
-   | `BACKEND_PORT` | `8080` (or your preferred port) |
-
-   > [!IMPORTANT]
-   > Use a strong password for `DB_PASSWORD`. This will be used by both the database and backend to authenticate.
-
-5. **Deploy the Stack**
-   - Click **Deploy the stack**
-   - Wait for both containers to start (this may take a minute)
-
-6. **Verify Deployment**
-   - Go to **Containers** in the left sidebar
-   - You should see two containers:
-     - `vending-backpack-postgres-1` (or similar)
-     - `vending-backpack-backend-1` (or similar)
-   - Both should show status: **running** (green)
-
-### Step 3: Access Your Application
-
-- Your backend will be accessible at: `http://your-server-ip:8080`
-- Replace `8080` with whatever port you configured
-
----
-
-## Deployment Method 2: Manual Container Creation
-
-If you prefer more granular control, you can create each container separately.
-
-### Step 1: Create a Docker Network
-
-1. Go to **Networks** in Portainer
-2. Click **+ Add network**
-3. **Name**: `vending_network`
-4. **Driver**: `bridge`
-5. Click **Create the network**
-
-### Step 2: Deploy PostgreSQL Container
-
-1. **Navigate to Containers**
-   - Click **Containers** in the left sidebar
-   - Click **+ Add container**
-
-2. **Basic Configuration**
-   - **Name**: `vending_db`
-   - **Image**: `postgres:15-alpine`
-
-3. **Network Configuration**
-   - Scroll to **Network** section
-   - Select `vending_network` from the dropdown
-
-4. **Environment Variables**
-   
-   Click **+ add environment variable** for each:
-   
-   | Name | Value |
-   |------|-------|
-   | `POSTGRES_DB` | `vending_db` |
-   | `POSTGRES_USER` | `vending_user` |
-   | `POSTGRES_PASSWORD` | Your secure password |
-
-5. **Volume Mapping**
-   - Scroll to **Volumes** section
-   - Click **+ map additional volume**
-   - **Container**: `/var/lib/postgresql/data`
-   - **Volume**: Click **+ volume** and create named volume `postgres_data`
-
-6. **Restart Policy**
-   - Scroll to **Restart policy**
-   - Select **Unless stopped**
-
-7. **Deploy Container**
-   - Click **Deploy the container**
-   - Wait for status to show **running**
-
-### Step 3: Deploy Backend Container
-
-1. **Navigate to Containers**
-   - Click **Containers** in the left sidebar
-   - Click **+ Add container**
-
-2. **Basic Configuration**
-   - **Name**: `vending_backpack_backend`
-   - **Image**: Your backend image name (e.g., `your-registry/vending-backend:latest`)
-
-3. **Network Configuration**
-   - Scroll to **Network** section
-   - Select `vending_network` (same network as database)
-
-4. **Port Mapping**
-   - Scroll to **Port mapping**
-   - Click **+ publish a new network port**
-   - **Host**: `8080` (external port)
-   - **Container**: `8080` (internal port, adjust if different)
-
-5. **Environment Variables**
-   
-   Click **+ add environment variable**:
-   
-   | Name | Value |
-   |------|-------|
-   | `DATABASE_URL` | `postgresql://vending_user:YOUR_PASSWORD@vending_db:5432/vending_db` |
-
-   > [!WARNING]
-   > Replace `YOUR_PASSWORD` with the same password you used for the PostgreSQL container.
-
-6. **Restart Policy**
-   - Select **Unless stopped**
-
-7. **Deploy Container**
-   - Click **Deploy the container**
-
----
-
-## Post-Deployment Tasks
-
-### Verify Database Connection
-
-1. **Check Backend Logs**
-   - Go to **Containers**
-   - Click on `vending_backpack_backend`
-   - Click **Logs**
-   - Look for successful database connection messages
-
-2. **Test Database Access** (Optional)
-   - Click on `vending_db` container
-   - Click **Console**
-   - Click **Connect**
-   - Run: `psql -U vending_user -d vending_db`
-   - Type `\dt` to list tables (if migrations have run)
-
-### Run Database Migrations
-
-If your backend doesn't auto-migrate, you may need to run migrations manually:
-
-1. Click on your backend container
-2. Click **Console** → **Connect**
-3. Run your migration command (depends on your backend framework)
-
----
-
-## Managing Your Deployment
-
-### Updating the Backend
-
-**Using Stacks:**
-1. Pull the latest image on the server
-2. Go to **Stacks** → `vending-backpack`
-3. Click **Update the stack**
-4. Enable **Re-pull image and redeploy**
-5. Click **Update**
-
-**Using Manual Containers:**
-1. Stop the backend container
-2. Pull the latest image
-3. Recreate the container with the same settings
-
-> [!TIP]
-> The database container doesn't need to be stopped when updating the backend.
-
-### Backing Up the Database
-
-1. **Via Portainer Console:**
-   - Click on `vending_db` container
-   - Click **Console** → **Connect**
-   - Run: `pg_dump -U vending_user vending_db > /tmp/backup.sql`
-   - Use **Exec Console** to copy the file out
-
-2. **Via Volume Backup:**
-   - Go to **Volumes**
-   - Find `postgres_data` (or your stack's volume)
-   - Use Portainer's backup feature or manually copy volume data
+- The older Portainer docs in this repo were written for previous image names and older runtime assumptions.
+- Use the stack file and cutover document above for current production changes.
 
 ### Viewing Logs
 

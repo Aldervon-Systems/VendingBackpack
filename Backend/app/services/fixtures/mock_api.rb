@@ -34,6 +34,10 @@ module Fixtures
       @store.read_json("daily_stats.json")
     end
 
+    def corporate_snapshot(org_id)
+      Fixtures::MutableStore.corporate_snapshots[org_id.to_s]
+    end
+
     def find_item_by_barcode(barcode)
       warehouse_inventory.find { |item| item["barcode"] == barcode } || {}
     end

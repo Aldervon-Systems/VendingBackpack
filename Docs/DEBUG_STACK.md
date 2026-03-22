@@ -33,7 +33,7 @@ services:
       - vending_network
 
   frontend:
-    image: ghcr.io/aldervon-systems/vendingbackpack-frontend:latest
+    image: ghcr.io/aldervon-systems/vendingbackpack/frontend-flutter:latest
     container_name: vending_frontend
     restart: unless-stopped
     ports:

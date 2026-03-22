@@ -73,6 +73,15 @@ module Api
 
         Fixtures::MutableStore.add_user(user)
 
+        if role.to_s.downcase == "employee" && !Employee.exists?(id: user["id"])
+          Employee.create!(
+            id: user["id"],
+            name: name.presence || email.split("@").first.to_s.humanize,
+            color: 0xFF4A5568,
+            is_active: true
+          )
+        end
+
         render json: {
           access_token: issue_access_token(user),
           token_type: "bearer",
@@ -204,24 +213,29 @@ module Api
         lat = params[:lat].to_f
         lng = params[:lng].to_f
         
-        machine = {
-          "id" => Time.now.to_i,
-          "name" => name,
-          "vin" => vin,
-          "organization_id" => org_id,
-          "status" => "online",
-          "battery" => 100,
-          "lat" => lat,
-          "lng" => lng,
-          "location" => "Registered at Base"
+        machine = Machine.create!(
+          id: Time.now.to_i.to_s,
+          name: name,
+          vin: vin.presence,
+          organization_id: org_id.presence,
+          status: "online",
+          battery: 100,
+          lat: lat,
+          lng: lng,
+          location: "Registered at Base"
+        )
+
+        render json: {
+          id: machine.id,
+          name: machine.name,
+          vin: machine.vin,
+          organization_id: machine.organization_id,
+          status: machine.status,
+          battery: machine.battery,
+          lat: machine.lat,
+          lng: machine.lng,
+          location: machine.location
         }
-        
-        Fixtures::MutableStore.add_machine(machine)
-        inventory = Fixtures::MutableStore.inventory
-        machine_key = machine["id"].to_s
-        inventory[machine_key] ||= []
-        Fixtures::MutableStore.save_json("inventory.json", inventory)
-        render json: machine
       rescue => e
         render json: { detail: e.message }, status: :internal_server_error
       end

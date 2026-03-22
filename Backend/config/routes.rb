@@ -19,6 +19,7 @@ Rails.application.routes.draw do
     get "/warehouse/shipments", to: "api/warehouse#get_shipments"
     post "/warehouse/shipments", to: "api/warehouse#add_shipment"
     get "/daily_stats", to: "api/warehouse#daily_stats"
+    get "/corporate", to: "api/corporate#show"
 
     get "/items", to: "api/items#index"
     post "/items", to: "api/items#create"
@@ -34,7 +35,7 @@ Rails.application.routes.draw do
     post "/transactions/:id/refund", to: "api/transactions#refund", constraints: { id: /\d+/ }
 
     get "/machines", to: "api/machines#index"
-    get "/machines/:id", to: "api/machines#show", constraints: { id: /\d+/ }
+    get "/machines/:id", to: "api/machines#show"
 
     get "/routes", to: "api/routes#routes"
     get "/employees", to: "api/routes#employees"

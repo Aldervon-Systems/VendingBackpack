@@ -28,6 +28,14 @@ class ApplicationController < ActionController::API
     render json: { detail: "Forbidden" }, status: :forbidden
   end
 
+  def ensure_employee_parity!
+    return unless current_user
+    return unless current_user["role"].to_s.downcase == "employee"
+    return if Employee.exists?(id: current_user["id"].to_s)
+
+    render json: { detail: "Forbidden" }, status: :forbidden
+  end
+
   def current_user
     return @current_user if defined?(@current_user)
 
