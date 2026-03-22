@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, Eye, EyeOff, Printer, RefreshCcw } from "lucide-react";
 import { ParityButton } from "@/components/parity/parity-button";
 import { ParityCard } from "@/components/parity/parity-card";
@@ -20,8 +20,7 @@ import {
 } from "@/types/corporate";
 import {
   createDefaultCorporateViewPreferences,
-  readCorporateViewPreferences,
-  writeCorporateViewPreferences,
+  normalizeCorporateViewPreferences,
 } from "@/features/corporate/lib/corporate-preferences";
 
 const corporateRepository = new ApiCorporateRepository();
@@ -62,33 +61,98 @@ const WIDGET_DETAILS: Record<
 };
 
 export function CorporateScreen() {
-  const { session } = useAuth();
+  const { isRestoring, session } = useAuth();
   const [snapshot, setSnapshot] = useState<CorporateSnapshot | null>(null);
   const [error, setError] = useState("");
+  const [preferencesError, setPreferencesError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [refreshToken, setRefreshToken] = useState(0);
   const [preferences, setPreferences] = useState<CorporateViewPreferences>(createDefaultCorporateViewPreferences);
   const [preferencesReady, setPreferencesReady] = useState(false);
+  const lastSavedPreferencesRef = useRef<string | null>(null);
 
   const userId = session?.user.id ?? null;
 
   useEffect(() => {
-    if (!userId) {
-      setPreferences(createDefaultCorporateViewPreferences());
-      setPreferencesReady(false);
-      return;
+    let active = true;
+
+    if (isRestoring) {
+      return () => {
+        active = false;
+      };
     }
 
-    setPreferences(readCorporateViewPreferences(userId));
-    setPreferencesReady(true);
-  }, [userId]);
+    if (!userId) {
+      const defaults = createDefaultCorporateViewPreferences();
+      setPreferences(defaults);
+      setPreferencesReady(false);
+      setPreferencesError("");
+      lastSavedPreferencesRef.current = JSON.stringify(defaults);
+      return () => {
+        active = false;
+      };
+    }
+
+    setPreferencesReady(false);
+    setPreferencesError("");
+
+    corporateRepository.getPreferences()
+      .then((nextPreferences) => {
+        if (!active) {
+          return;
+        }
+
+        const normalized = normalizeCorporateViewPreferences(nextPreferences);
+        setPreferences(normalized);
+        lastSavedPreferencesRef.current = JSON.stringify(normalized);
+      })
+      .catch(() => {
+        if (!active) {
+          return;
+        }
+
+        const fallback = createDefaultCorporateViewPreferences();
+        setPreferences(fallback);
+        setPreferencesError("Corporate layout preferences could not be loaded. Using defaults for this session.");
+        lastSavedPreferencesRef.current = JSON.stringify(fallback);
+      })
+      .finally(() => {
+        if (active) {
+          setPreferencesReady(true);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isRestoring, userId]);
 
   useEffect(() => {
     if (!userId || !preferencesReady) {
       return;
     }
 
-    writeCorporateViewPreferences(userId, preferences);
+    const serialized = JSON.stringify(preferences);
+    if (serialized === lastSavedPreferencesRef.current) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      corporateRepository.savePreferences(preferences)
+        .then((savedPreferences) => {
+          const normalized = normalizeCorporateViewPreferences(savedPreferences);
+          lastSavedPreferencesRef.current = JSON.stringify(normalized);
+          setPreferences(normalized);
+          setPreferencesError("");
+        })
+        .catch((nextError) => {
+          setPreferencesError(nextError instanceof Error ? nextError.message : "Corporate layout preferences could not be saved.");
+        });
+    }, 500);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [preferences, preferencesReady, userId]);
 
   useEffect(() => {
@@ -239,6 +303,7 @@ export function CorporateScreen() {
                     type="button"
                     data-active={isVisible}
                     onClick={() => toggleWidget(widgetId)}
+                    disabled={!preferencesReady}
                   >
                     {isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
                     <span>{widget.label}</span>
@@ -249,7 +314,7 @@ export function CorporateScreen() {
                       className="corporate-widget-control__move"
                       type="button"
                       onClick={() => moveWidget(widgetId, -1)}
-                      disabled={index === 0}
+                      disabled={!preferencesReady || index === 0}
                       aria-label={`Move ${widget.label} up`}
                     >
                       <ArrowUp size={14} />
@@ -258,7 +323,7 @@ export function CorporateScreen() {
                       className="corporate-widget-control__move"
                       type="button"
                       onClick={() => moveWidget(widgetId, 1)}
-                      disabled={index === preferences.widgetOrder.length - 1}
+                      disabled={!preferencesReady || index === preferences.widgetOrder.length - 1}
                       aria-label={`Move ${widget.label} down`}
                     >
                       <ArrowDown size={14} />
@@ -272,6 +337,7 @@ export function CorporateScreen() {
       </ParityCard>
 
       {error ? <div className="form-error form-error--compact corporate-inline-error">{error.toUpperCase()}</div> : null}
+      {preferencesError ? <div className="form-error form-error--compact corporate-inline-error">{preferencesError.toUpperCase()}</div> : null}
 
       {orderedVisibleWidgets.length ? (
         <div className="corporate-widget-grid">
@@ -291,6 +357,7 @@ export function CorporateScreen() {
                   <BudgetVarianceTable
                     rows={budgetVarianceRows}
                     sort={preferences.tableSorts.budgetVariance}
+                    disabled={!preferencesReady}
                     onSort={updateBudgetVarianceSort}
                   />
                 ) : null}
@@ -298,6 +365,7 @@ export function CorporateScreen() {
                   <MachineProfitTable
                     rows={machineProfitRows}
                     sort={preferences.tableSorts.machineProfit}
+                    disabled={!preferencesReady}
                     onSort={updateMachineProfitSort}
                   />
                 ) : null}
@@ -461,10 +529,12 @@ function RollingSalesChart({ series }: { series: RollingSalesPoint[] }) {
 function BudgetVarianceTable({
   rows,
   sort,
+  disabled,
   onSort,
 }: {
   rows: BudgetVarianceRow[];
   sort: CorporateViewPreferences["tableSorts"]["budgetVariance"];
+  disabled: boolean;
   onSort: (column: CorporateViewPreferences["tableSorts"]["budgetVariance"]["column"]) => void;
 }) {
   return (
@@ -472,11 +542,11 @@ function BudgetVarianceTable({
       <table className="corporate-table">
         <thead>
           <tr>
-            <th><SortHeader label="Period" active={sort.column === "period"} direction={sort.direction} onClick={() => onSort("period")} /></th>
-            <th><SortHeader label="Budget" active={sort.column === "budget"} direction={sort.direction} onClick={() => onSort("budget")} /></th>
-            <th><SortHeader label="Revenue" active={sort.column === "revenue"} direction={sort.direction} onClick={() => onSort("revenue")} /></th>
-            <th><SortHeader label="Variance" active={sort.column === "variance"} direction={sort.direction} onClick={() => onSort("variance")} /></th>
-            <th><SortHeader label="Variance %" active={sort.column === "variancePercent"} direction={sort.direction} onClick={() => onSort("variancePercent")} /></th>
+            <th><SortHeader label="Period" active={sort.column === "period"} direction={sort.direction} disabled={disabled} onClick={() => onSort("period")} /></th>
+            <th><SortHeader label="Budget" active={sort.column === "budget"} direction={sort.direction} disabled={disabled} onClick={() => onSort("budget")} /></th>
+            <th><SortHeader label="Revenue" active={sort.column === "revenue"} direction={sort.direction} disabled={disabled} onClick={() => onSort("revenue")} /></th>
+            <th><SortHeader label="Variance" active={sort.column === "variance"} direction={sort.direction} disabled={disabled} onClick={() => onSort("variance")} /></th>
+            <th><SortHeader label="Variance %" active={sort.column === "variancePercent"} direction={sort.direction} disabled={disabled} onClick={() => onSort("variancePercent")} /></th>
           </tr>
         </thead>
         <tbody>
@@ -498,10 +568,12 @@ function BudgetVarianceTable({
 function MachineProfitTable({
   rows,
   sort,
+  disabled,
   onSort,
 }: {
   rows: MachineProfitRow[];
   sort: CorporateViewPreferences["tableSorts"]["machineProfit"];
+  disabled: boolean;
   onSort: (column: CorporateViewPreferences["tableSorts"]["machineProfit"]["column"]) => void;
 }) {
   return (
@@ -509,12 +581,12 @@ function MachineProfitTable({
       <table className="corporate-table">
         <thead>
           <tr>
-            <th><SortHeader label="Machine" active={sort.column === "machineName"} direction={sort.direction} onClick={() => onSort("machineName")} /></th>
-            <th><SortHeader label="Location" active={sort.column === "location"} direction={sort.direction} onClick={() => onSort("location")} /></th>
-            <th><SortHeader label="Revenue" active={sort.column === "revenue"} direction={sort.direction} onClick={() => onSort("revenue")} /></th>
-            <th><SortHeader label="Est. Cost" active={sort.column === "estimatedCost"} direction={sort.direction} onClick={() => onSort("estimatedCost")} /></th>
-            <th><SortHeader label="Gross Profit" active={sort.column === "grossProfit"} direction={sort.direction} onClick={() => onSort("grossProfit")} /></th>
-            <th><SortHeader label="Margin %" active={sort.column === "marginPercent"} direction={sort.direction} onClick={() => onSort("marginPercent")} /></th>
+            <th><SortHeader label="Machine" active={sort.column === "machineName"} direction={sort.direction} disabled={disabled} onClick={() => onSort("machineName")} /></th>
+            <th><SortHeader label="Location" active={sort.column === "location"} direction={sort.direction} disabled={disabled} onClick={() => onSort("location")} /></th>
+            <th><SortHeader label="Revenue" active={sort.column === "revenue"} direction={sort.direction} disabled={disabled} onClick={() => onSort("revenue")} /></th>
+            <th><SortHeader label="Est. Cost" active={sort.column === "estimatedCost"} direction={sort.direction} disabled={disabled} onClick={() => onSort("estimatedCost")} /></th>
+            <th><SortHeader label="Gross Profit" active={sort.column === "grossProfit"} direction={sort.direction} disabled={disabled} onClick={() => onSort("grossProfit")} /></th>
+            <th><SortHeader label="Margin %" active={sort.column === "marginPercent"} direction={sort.direction} disabled={disabled} onClick={() => onSort("marginPercent")} /></th>
           </tr>
         </thead>
         <tbody>
@@ -538,15 +610,17 @@ function SortHeader({
   label,
   active,
   direction,
+  disabled,
   onClick,
 }: {
   label: string;
   active: boolean;
   direction: SortDirection;
+  disabled: boolean;
   onClick: () => void;
 }) {
   return (
-    <button className="corporate-table__sort" type="button" data-active={active} onClick={onClick}>
+    <button className="corporate-table__sort" type="button" data-active={active} disabled={disabled} onClick={onClick}>
       <span>{label}</span>
       <span className="corporate-table__sort-direction">{active ? (direction === "desc" ? "↓" : "↑") : "↕"}</span>
     </button>

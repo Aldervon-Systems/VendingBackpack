@@ -895,6 +895,92 @@ button {
   gap: 16px;
 }
 
+.dashboard-layout-card {
+  display: grid;
+  gap: 18px;
+}
+
+.dashboard-layout-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.dashboard-layout-card__eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+}
+
+.dashboard-layout-card__title {
+  margin: 6px 0 0;
+  font-size: clamp(28px, 4vw, 38px);
+  letter-spacing: -0.04em;
+}
+
+.dashboard-layout-card__copy {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.dashboard-layout-controls {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-layout-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.dashboard-layout-control__toggle,
+.dashboard-layout-control__move {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+}
+
+.dashboard-layout-control__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.dashboard-layout-control__toggle[data-active="false"] {
+  color: var(--muted);
+}
+
+.dashboard-layout-control__toggle:disabled,
+.dashboard-layout-control__move:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.dashboard-layout-control__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-layout-control__move {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
 .dashboard-metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1858,6 +1944,15 @@ button {
   .modal-actions,
   .corporate-widget-controls {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-layout-card__top,
+  .dashboard-layout-control {
+    display: grid;
+  }
+
+  .dashboard-layout-control__actions {
+    justify-content: flex-start;
   }
 
   .whitelist-entry,

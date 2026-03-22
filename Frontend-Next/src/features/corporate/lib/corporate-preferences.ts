@@ -10,13 +10,6 @@ import {
   type CorporateWidgetId,
 } from "@/types/corporate";
 
-const STORAGE_PREFIX = "vb.next.corporate.preferences";
-
-type StoredEnvelope<T> = {
-  version: 1;
-  value: T;
-};
-
 export function createDefaultCorporateViewPreferences(): CorporateViewPreferences {
   return {
     visibleWidgets: [...CORPORATE_WIDGET_IDS],
@@ -34,43 +27,7 @@ export function createDefaultCorporateViewPreferences(): CorporateViewPreference
   };
 }
 
-export function getCorporatePreferencesStorageKey(userId: string) {
-  return `${STORAGE_PREFIX}.${userId}`;
-}
-
-export function readCorporateViewPreferences(userId: string): CorporateViewPreferences {
-  if (typeof window === "undefined") {
-    return createDefaultCorporateViewPreferences();
-  }
-
-  const raw = window.localStorage.getItem(getCorporatePreferencesStorageKey(userId));
-  if (!raw) {
-    return createDefaultCorporateViewPreferences();
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as StoredEnvelope<unknown> | Partial<CorporateViewPreferences>;
-    const value = typeof parsed === "object" && parsed !== null && "value" in parsed ? parsed.value : parsed;
-    return normalizeCorporateViewPreferences(value);
-  } catch {
-    return createDefaultCorporateViewPreferences();
-  }
-}
-
-export function writeCorporateViewPreferences(userId: string, preferences: CorporateViewPreferences) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  const envelope: StoredEnvelope<CorporateViewPreferences> = {
-    version: 1,
-    value: normalizeCorporateViewPreferences(preferences),
-  };
-
-  window.localStorage.setItem(getCorporatePreferencesStorageKey(userId), JSON.stringify(envelope));
-}
-
-function normalizeCorporateViewPreferences(value: unknown): CorporateViewPreferences {
+export function normalizeCorporateViewPreferences(value: unknown): CorporateViewPreferences {
   const defaults = createDefaultCorporateViewPreferences();
 
   if (typeof value !== "object" || value === null) {
