@@ -20,6 +20,10 @@ Rails.application.routes.draw do
     post "/warehouse/shipments", to: "api/warehouse#add_shipment"
     get "/daily_stats", to: "api/warehouse#daily_stats"
     get "/corporate", to: "api/corporate#show"
+    get "/corporate/preferences", to: "api/corporate_preferences#show"
+    put "/corporate/preferences", to: "api/corporate_preferences#update"
+    get "/dashboard/preferences", to: "api/dashboard_preferences#show"
+    put "/dashboard/preferences", to: "api/dashboard_preferences#update"
 
     get "/items", to: "api/items#index"
     post "/items", to: "api/items#create"

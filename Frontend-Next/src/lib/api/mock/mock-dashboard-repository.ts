@@ -1,6 +1,13 @@
 import type { DashboardRepository } from "@/lib/api/interfaces/dashboard-repository";
-import type { DashboardSnapshot } from "@/types/dashboard";
+import {
+  type DashboardSnapshot,
+  type DashboardViewPreferences,
+} from "@/types/dashboard";
 import type { UserRole } from "@/types/auth";
+import {
+  createDefaultDashboardViewPreferences,
+  normalizeDashboardViewPreferences,
+} from "@/features/dashboard/lib/dashboard-preferences";
 
 const managerSnapshot: DashboardSnapshot = {
   heroLabel: "Fleet revenue today",
@@ -44,11 +51,30 @@ const employeeSnapshot: DashboardSnapshot = {
 };
 
 export class MockDashboardRepository implements DashboardRepository {
+  private preferences: DashboardViewPreferences = createDefaultDashboardViewPreferences();
+
   async getSnapshot(role: UserRole): Promise<DashboardSnapshot> {
     return new Promise((resolve) => {
       window.setTimeout(() => {
         resolve(role === "manager" ? managerSnapshot : employeeSnapshot);
       }, 420);
+    });
+  }
+
+  async getPreferences(): Promise<DashboardViewPreferences> {
+    return new Promise((resolve) => {
+      window.setTimeout(() => {
+        resolve(normalizeDashboardViewPreferences(this.preferences));
+      }, 60);
+    });
+  }
+
+  async savePreferences(preferences: DashboardViewPreferences): Promise<DashboardViewPreferences> {
+    return new Promise((resolve) => {
+      window.setTimeout(() => {
+        this.preferences = normalizeDashboardViewPreferences(preferences);
+        resolve(this.preferences);
+      }, 60);
     });
   }
 }

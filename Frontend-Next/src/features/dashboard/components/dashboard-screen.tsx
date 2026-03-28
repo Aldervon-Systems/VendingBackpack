@@ -1,134 +1,143 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { CircleDollarSign, LaptopMinimal, Radio, TriangleAlert } from "lucide-react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
+import { ArrowDown, ArrowUp, CircleDollarSign, Eye, EyeOff, LaptopMinimal, Radio, TriangleAlert } from "lucide-react";
 import { ParityCard } from "@/components/parity/parity-card";
 import { ParitySectionHeader } from "@/components/parity/parity-section-header";
 import { LoadingScreen } from "@/components/primitives/loading-screen";
 import { StatusPill } from "@/components/primitives/status-pill";
-import { apiRequest } from "@/lib/api/api-client";
-import { MockDashboardRepository } from "@/lib/api/mock/mock-dashboard-repository";
+import { ApiDashboardRepository } from "@/lib/api/repositories/api-dashboard-repository";
 import { useAuth } from "@/providers/auth-provider";
-import type { DashboardSnapshot } from "@/types/dashboard";
+import {
+  createDefaultDashboardViewPreferences,
+  normalizeDashboardViewPreferences,
+} from "@/features/dashboard/lib/dashboard-preferences";
+import type {
+  DashboardSectionId,
+  DashboardSnapshot,
+  DashboardViewPreferences,
+} from "@/types/dashboard";
 
-const fallbackRepository = new MockDashboardRepository();
+const dashboardRepository = new ApiDashboardRepository();
 
-type LiveMachine = {
-  id: string;
-  name: string;
-  status?: string;
-  battery?: number;
+const SECTION_TITLES: Record<DashboardSectionId, string> = {
+  systemOverview: "System Overview",
+  networkNodes: "Network Nodes",
+  routeNotes: "Route Notes",
 };
 
-function buildLiveSnapshot(
-  role: "manager" | "employee",
-  inventory: Record<string, Array<{ sku: string; name: string; qty: number; barcode: string }>>,
-  employees: Array<{ id: string; name: string }>,
-  dailyStats: Array<{ amount?: number }>,
-  machines: LiveMachine[],
-): DashboardSnapshot | null {
-  const machineEntries: LiveMachine[] = machines.length
-    ? machines
-    : Object.entries(inventory).map(([id, rows]) => ({
-        id,
-        name: `Machine ${id}`,
-        status: rows.some((row) => row.qty > 0) ? "online" : "attention",
-      }));
-
-  if (!machineEntries.length && !employees.length && !dailyStats.length && !Object.keys(inventory).length) {
-    return null;
-  }
-
-  const latestDailyStat = dailyStats.length ? dailyStats[dailyStats.length - 1] : null;
-  const revenueToday = latestDailyStat ? Number(latestDailyStat.amount ?? 0) : 0;
-  const topItems = Object.values(inventory).flat();
-  const activeMachineCount = machineEntries.filter((machine) => machine.status !== "attention").length;
-  const totalMachineCount = machineEntries.length;
-
-  return {
-    heroLabel: role === "manager" ? "Fleet revenue today" : "Your route progress",
-    heroValue:
-      role === "manager"
-        ? `$${revenueToday.toLocaleString("en-US", { maximumFractionDigits: 0 }) || "0"}`
-        : `${Math.min(activeMachineCount, totalMachineCount)} / ${Math.max(totalMachineCount, 1)} stops`,
-    heroNote:
-      role === "manager"
-        ? `${totalMachineCount || 0} machines reporting and ${employees.length || 0} employees loaded from the backend.`
-        : `${topItems.length || 0} warehouse rows remain available for the current route.`,
-    kpis:
-      role === "manager"
-        ? [
-            { label: "Active machines", value: String(activeMachineCount || 0), tone: "success" as const },
-            { label: "Employees", value: String(employees.length || 0), tone: "default" as const },
-            { label: "Revenue today", value: `$${revenueToday.toLocaleString("en-US", { maximumFractionDigits: 0 }) || "0"}`, tone: "warning" as const },
-          ]
-        : [
-            { label: "Stops left", value: String(Math.max(totalMachineCount - activeMachineCount, 0)), tone: "default" as const },
-            { label: "Machines online", value: String(activeMachineCount || 0), tone: "success" as const },
-            { label: "Low stock alerts", value: String(topItems.filter((row) => row.qty <= 1).length), tone: "warning" as const },
-          ],
-    machineSummaries: machineEntries.slice(0, 3).map((machine, index) => {
-      const inventoryRows = inventory[machine.id] ?? [];
-      const topItem = inventoryRows[0]?.name ?? (index === 0 ? "Cold Brew" : "Inventory rows pending");
-
-      return {
-        id: machine.id,
-        name: machine.name,
-        status: machine.status === "attention" ? "attention" : "online",
-        assignedTo: role === "manager" ? (employees[index]?.name ?? "Unassigned") : "You",
-        nextServiceWindow: index === 0 ? "11:30 AM" : index === 1 ? "1:15 PM" : "3:45 PM",
-        topItem,
-      };
-    }),
-    routeHighlights: [
-      `${totalMachineCount || 0} machines reporting through the live API.`,
-      `${employees.length || 0} employees loaded from backend fixtures.`,
-      dailyStats.length ? `Most recent revenue entry is $${revenueToday.toLocaleString("en-US", { maximumFractionDigits: 0 }) || "0"}.` : "No daily stats have been recorded yet.",
-    ],
-  };
-}
-
 export function DashboardScreen() {
-  const { effectiveRole } = useAuth();
+  const { effectiveRole, isRestoring, session } = useAuth();
   const [snapshot, setSnapshot] = useState<DashboardSnapshot | null>(null);
+  const [preferences, setPreferences] = useState<DashboardViewPreferences>(createDefaultDashboardViewPreferences);
+  const [preferencesReady, setPreferencesReady] = useState(false);
+  const [preferencesError, setPreferencesError] = useState("");
+  const lastSavedPreferencesRef = useRef<string | null>(null);
+
+  const userId = session?.user.id ?? null;
 
   useEffect(() => {
     let active = true;
     const role = effectiveRole;
 
     if (!role) {
-      return;
+      return () => {
+        active = false;
+      };
     }
 
-    async function loadSnapshot() {
-      try {
-        const [inventory, employees, dailyStats, machines] = await Promise.all([
-          apiRequest<Record<string, Array<{ sku: string; name: string; qty: number; barcode: string }>>>("/inventory"),
-          apiRequest<Array<{ id: string; name: string }>>("/employees"),
-          apiRequest<Array<{ amount?: number }>>("/daily_stats"),
-          apiRequest<Array<{ id: string; name: string; status?: string }>>("/machines"),
-        ]);
-
-        const liveSnapshot = buildLiveSnapshot(role!, inventory ?? {}, employees ?? [], dailyStats ?? [], machines ?? []);
-        const nextSnapshot = liveSnapshot ?? (await fallbackRepository.getSnapshot(role!));
-
-        if (active) {
-          setSnapshot(nextSnapshot);
-        }
-      } catch {
-        const fallbackSnapshot = await fallbackRepository.getSnapshot(role!);
-        if (active) {
-          setSnapshot(fallbackSnapshot);
-        }
+    dashboardRepository.getSnapshot(role).then((nextSnapshot) => {
+      if (active) {
+        setSnapshot(nextSnapshot);
       }
-    }
-
-    void loadSnapshot();
+    });
 
     return () => {
       active = false;
     };
   }, [effectiveRole]);
+
+  useEffect(() => {
+    let active = true;
+
+    if (isRestoring) {
+      return () => {
+        active = false;
+      };
+    }
+
+    if (!userId) {
+      const defaults = createDefaultDashboardViewPreferences();
+      setPreferences(defaults);
+      setPreferencesReady(false);
+      setPreferencesError("");
+      lastSavedPreferencesRef.current = JSON.stringify(defaults);
+      return () => {
+        active = false;
+      };
+    }
+
+    setPreferencesReady(false);
+    setPreferencesError("");
+
+    dashboardRepository.getPreferences()
+      .then((nextPreferences) => {
+        if (!active) {
+          return;
+        }
+
+        const normalized = normalizeDashboardViewPreferences(nextPreferences);
+        setPreferences(normalized);
+        lastSavedPreferencesRef.current = JSON.stringify(normalized);
+      })
+      .catch(() => {
+        if (!active) {
+          return;
+        }
+
+        const fallback = createDefaultDashboardViewPreferences();
+        setPreferences(fallback);
+        setPreferencesError("Dashboard layout preferences could not be loaded. Using defaults for this session.");
+        lastSavedPreferencesRef.current = JSON.stringify(fallback);
+      })
+      .finally(() => {
+        if (active) {
+          setPreferencesReady(true);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isRestoring, userId]);
+
+  useEffect(() => {
+    if (!userId || !preferencesReady) {
+      return;
+    }
+
+    const serialized = JSON.stringify(preferences);
+    if (serialized === lastSavedPreferencesRef.current) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      dashboardRepository.savePreferences(preferences)
+        .then((savedPreferences) => {
+          const normalized = normalizeDashboardViewPreferences(savedPreferences);
+          lastSavedPreferencesRef.current = JSON.stringify(normalized);
+          setPreferences(normalized);
+          setPreferencesError("");
+        })
+        .catch((nextError) => {
+          setPreferencesError(nextError instanceof Error ? nextError.message : "Dashboard layout preferences could not be saved.");
+        });
+    }, 500);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [preferences, preferencesReady, userId]);
 
   if (!snapshot) {
     return <LoadingScreen label="Loading dashboard snapshot" />;
@@ -136,9 +145,9 @@ export function DashboardScreen() {
 
   const metricIcons = [LaptopMinimal, Radio, CircleDollarSign];
   const sectionTitle = effectiveRole === "manager" ? "ALL NETWORK NODES" : "ASSIGNED ROUTE NODES";
-
-  return (
-    <div className="dashboard-screen">
+  const orderedVisibleSections = preferences.sectionOrder.filter((sectionId) => preferences.visibleSections.includes(sectionId));
+  const sections: Record<DashboardSectionId, ReactNode> = {
+    systemOverview: (
       <section className="dashboard-block">
         <ParitySectionHeader title="SYSTEM OVERVIEW" subtitle="LIVE ENVIRONMENT METRICS" />
         <div className="dashboard-metrics">
@@ -157,7 +166,8 @@ export function DashboardScreen() {
           })}
         </div>
       </section>
-
+    ),
+    networkNodes: (
       <section className="dashboard-block">
         <ParitySectionHeader title={sectionTitle} subtitle="REAL-TIME STATUS & PAYLOAD" />
         <div className="machine-card-list">
@@ -188,7 +198,8 @@ export function DashboardScreen() {
           ))}
         </div>
       </section>
-
+    ),
+    routeNotes: (
       <section className="dashboard-block">
         <ParitySectionHeader title="ROUTE NOTES" subtitle="LIVE OPERATIONS SIGNALS" />
         <div className="notes-list">
@@ -199,6 +210,103 @@ export function DashboardScreen() {
           ))}
         </div>
       </section>
+    ),
+  };
+
+  function toggleSection(sectionId: DashboardSectionId) {
+    setPreferences((current) => ({
+      ...current,
+      visibleSections: current.visibleSections.includes(sectionId)
+        ? current.visibleSections.filter((currentId) => currentId !== sectionId)
+        : [...current.visibleSections, sectionId],
+    }));
+  }
+
+  function moveSection(sectionId: DashboardSectionId, direction: -1 | 1) {
+    setPreferences((current) => {
+      const index = current.sectionOrder.indexOf(sectionId);
+      const nextIndex = index + direction;
+
+      if (index < 0 || nextIndex < 0 || nextIndex >= current.sectionOrder.length) {
+        return current;
+      }
+
+      const sectionOrder = [...current.sectionOrder];
+      [sectionOrder[index], sectionOrder[nextIndex]] = [sectionOrder[nextIndex], sectionOrder[index]];
+
+      return {
+        ...current,
+        sectionOrder,
+      };
+    });
+  }
+
+  return (
+    <div className="dashboard-screen">
+      <ParityCard kind="foundation" className="dashboard-layout-card">
+        <div className="dashboard-layout-card__top">
+          <div>
+            <div className="dashboard-layout-card__eyebrow">PERSONALIZED DASHBOARD LAYOUT</div>
+            <h1 className="dashboard-layout-card__title">{snapshot.heroLabel.toUpperCase()}</h1>
+            <div className="dashboard-layout-card__copy">{snapshot.heroNote}</div>
+          </div>
+        </div>
+
+        <div className="dashboard-layout-controls">
+          {preferences.sectionOrder.map((sectionId, index) => {
+            const isVisible = preferences.visibleSections.includes(sectionId);
+
+            return (
+              <div key={sectionId} className="dashboard-layout-control">
+                <button
+                  className="dashboard-layout-control__toggle"
+                  type="button"
+                  data-active={isVisible}
+                  onClick={() => toggleSection(sectionId)}
+                  disabled={!preferencesReady}
+                >
+                  {isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
+                  <span>{SECTION_TITLES[sectionId]}</span>
+                </button>
+
+                <div className="dashboard-layout-control__actions">
+                  <button
+                    className="dashboard-layout-control__move"
+                    type="button"
+                    onClick={() => moveSection(sectionId, -1)}
+                    disabled={!preferencesReady || index === 0}
+                    aria-label={`Move ${SECTION_TITLES[sectionId]} up`}
+                  >
+                    <ArrowUp size={14} />
+                  </button>
+                  <button
+                    className="dashboard-layout-control__move"
+                    type="button"
+                    onClick={() => moveSection(sectionId, 1)}
+                    disabled={!preferencesReady || index === preferences.sectionOrder.length - 1}
+                    aria-label={`Move ${SECTION_TITLES[sectionId]} down`}
+                  >
+                    <ArrowDown size={14} />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </ParityCard>
+
+      {preferencesError ? <div className="form-error form-error--compact corporate-inline-error">{preferencesError.toUpperCase()}</div> : null}
+
+      {orderedVisibleSections.length ? (
+        orderedVisibleSections.map((sectionId) => (
+          <div key={sectionId}>{sections[sectionId]}</div>
+        ))
+      ) : (
+        <ParityCard className="corporate-empty-state">
+          <div className="corporate-empty-state__title">All dashboard sections are hidden</div>
+          <div className="corporate-empty-state__copy">Use the layout controls above to re-enable the sections you want on this dashboard.</div>
+        </ParityCard>
+      )}
     </div>
   );
 }
