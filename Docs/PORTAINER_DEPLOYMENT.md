@@ -29,11 +29,13 @@ After deploy, verify:
 - `https://app.aldervon.com/health`
 - `https://app.aldervon.com/auth/login`
 - `https://app.aldervon.com/dashboard`
+- `https://app.aldervon.com/corporate`
 
 ## Notes
 
 - The older Portainer docs in this repo were written for previous image names and older runtime assumptions.
 - Use the stack file and cutover document above for current production changes.
+- The local Docker stack now follows the same Next-first frontend contract, while Portainer should continue pinning an approved `frontend-next:sha-...` tag rather than using `:latest`.
 
 ### Viewing Logs
 

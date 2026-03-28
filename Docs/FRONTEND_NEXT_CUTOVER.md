@@ -43,6 +43,7 @@ Preview validation URLs:
 - `http://localhost:9101/__frontend_health`
 - `http://localhost:9101/auth/login`
 - `http://localhost:9101/dashboard`
+- `http://localhost:9101/corporate`
 - `http://localhost:9101/routes`
 - `http://localhost:9101/warehouse`
 - `http://localhost:9101/admin`
@@ -80,6 +81,7 @@ Post-cutover validation URLs:
 - `http://localhost:9100/__frontend_health`
 - `http://localhost:9100/auth/login`
 - `http://localhost:9100/dashboard`
+- `http://localhost:9100/corporate`
 - `http://localhost:9100/routes`
 - `http://localhost:9100/warehouse`
 - `http://localhost:9100/admin`
@@ -105,6 +107,7 @@ docker compose -f docker-compose.yml -f docker-compose.frontend-next-preview.yml
 
 ## Notes
 
-- `docker-compose.yml` is left safe for current local use by defaulting `FRONTEND_IMAGE` to `frontend-flutter:latest`.
+- `docker-compose.yml` now defaults `FRONTEND_IMAGE` to `frontend-next:latest` so the local stack matches the current production frontend contract.
+- rollback remains an explicit `FRONTEND_IMAGE` swap back to the approved Flutter rollback image when needed.
 - The preview compose file forces an explicit `FRONTEND_NEXT_IMAGE` value so the candidate tag is always deliberate.
 - The frontend container healthcheck accepts either the new `__frontend_health` artifact or the existing `/health` path, which allows the base compose file to work before and after cutover.

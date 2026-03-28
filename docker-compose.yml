@@ -1,6 +1,6 @@
 services:
   backend:
-    image: ghcr.io/aldervon-systems/vendingbackpack/backend:latest
+    image: ${BACKEND_IMAGE:-ghcr.io/aldervon-systems/vendingbackpack/backend:latest}
     container_name: vending_backpack_backend
     restart: unless-stopped
     environment:
@@ -14,7 +14,7 @@ services:
       - ./Backend/storage:/rails/storage
 
   frontend:
-    image: ${FRONTEND_IMAGE:-ghcr.io/aldervon-systems/vendingbackpack/frontend-flutter:latest}
+    image: ${FRONTEND_IMAGE:-ghcr.io/aldervon-systems/vendingbackpack/frontend-next:latest}
     container_name: vending_frontend
     restart: unless-stopped
     ports:

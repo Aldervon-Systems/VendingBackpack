@@ -12,7 +12,8 @@ VendingBackpack is a monorepo that contains the **hardware**, **firmware**, and 
 
 - `Backend/` — **Backend API** (Ruby on Rails)
 - `Frontend/` — **Frontend App** (Flutter)
-- `docker-compose.yml` — **Docker Stack**: Rails API + Nginx (serving Flutter web)
+- `Frontend-Next/` — **Primary Web Frontend** (Next.js static export via nginx)
+- `docker-compose.yml` — **Docker Stack**: Rails API + nginx (serving the Next web frontend)
 - `Firmware/` — PlatformIO Arduino firmware
 - `Hardware/` — KiCad PCB project(s)
 - `CAD/` — FreeCAD models
@@ -29,12 +30,15 @@ VendingBackpack is a monorepo that contains the **hardware**, **firmware**, and 
 1) Start the stack:
 
 ```bash
+docker login ghcr.io
 docker compose up -d --build
 ```
 
 2) Open:
 - UI: `http://localhost:9100`
 - Backend Health: `http://localhost:9090/health`
+- Frontend Health: `http://localhost:9100/__frontend_health`
+- Corporate View: `http://localhost:9100/corporate`
 
 ## Local Development (No Docker)
 
@@ -59,6 +63,8 @@ flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:9090/api
 The stack uses environment variables for configuration. See `docker-compose.yml` for details.
 - `RAILS_ENV`: set to `production` or `development`
 - `SECRET_KEY_BASE`: required for production mode
+- `FRONTEND_IMAGE`: defaults to `ghcr.io/aldervon-systems/vendingbackpack/frontend-next:latest`
+- `BACKEND_IMAGE`: defaults to `ghcr.io/aldervon-systems/vendingbackpack/backend:latest`
 
 ## Login Credentials (Default)
 
