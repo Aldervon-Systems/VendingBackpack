@@ -1,0 +1,98 @@
+services:
+  backend:
+    image: ${BACKEND_IMAGE:?Set BACKEND_IMAGE to a pinned backend tag}
+    restart: unless-stopped
+    environment:
+      RAILS_ENV: production
+      PORT: 9090
+      BINDING: 0.0.0.0
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:?Set SECRET_KEY_BASE in Portainer}
+    ports:
+      - "${BACKEND_HOST_PORT:-9090}:9090"
+    volumes:
+      - backend_storage_production:/rails/storage
+    networks:
+      - production_net
+
+  frontend:
+    image: ${FRONTEND_IMAGE:?Set FRONTEND_IMAGE to a pinned frontend tag}
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_HOST_PORT:-9100}:80"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -q -O - http://localhost/__frontend_health >/dev/null 2>&1 || wget -q -O - http://localhost/health >/dev/null 2>&1
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - production_net
+
+  landing:
+    image: ${LANDING_IMAGE:-ghcr.io/aldervon-systems/vendingbackpack/landing:latest}
+    restart: unless-stopped
+    ports:
+      - "${LANDING_HOST_PORT:-9060}:80"
+    networks:
+      - production_net
+
+  rdfm-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: rdfm
+      POSTGRES_PASSWORD: ${RDFM_DB_PASSWORD:?Set RDFM_DB_PASSWORD in Portainer}
+      POSTGRES_DB: rdfm
+    volumes:
+      - rdfm_db_data_production:/var/lib/postgresql/data
+    networks:
+      - production_net
+
+  rdfm-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks:
+      - production_net
+
+  rdfm-server:
+    image: ${RDFM_SERVER_IMAGE:-ghcr.io/aldervon-systems/rdfm-server:latest}
+    restart: unless-stopped
+    depends_on:
+      - rdfm-db
+      - rdfm-redis
+    environment:
+      RDFM_JWT_SECRET: ${RDFM_JWT_SECRET:?Set RDFM_JWT_SECRET in Portainer}
+      RDFM_DB_CONNSTRING: postgresql://rdfm:${RDFM_DB_PASSWORD}@rdfm-db:5432/rdfm
+      RDFM_HOSTNAME: 0.0.0.0
+      RDFM_API_PORT: 5000
+      RDFM_LOCAL_PACKAGE_DIR: /packages
+      RDFM_WSGI_SERVER: gunicorn
+      RDFM_FRONTEND_APP_URL: ${RDFM_FRONTEND_APP_URL:-https://api.aldervon.com/device}
+      REDIS_HOST: rdfm-redis
+      REDIS_PORT: 6379
+      RDFM_DISABLE_ENCRYPTION: 1
+      RDFM_OAUTH_URL: ${RDFM_OAUTH_URL:-https://keycloak.aldervon.com/keycloak/realms/master/protocol/openid-connect/token/introspect}
+      RDFM_OAUTH_CLIENT_ID: ${RDFM_OAUTH_CLIENT_ID:-rdfm-server-introspection}
+      RDFM_OAUTH_CLIENT_SEC: ${RDFM_OAUTH_CLIENT_SEC:?Set RDFM_OAUTH_CLIENT_SEC in Portainer}
+    ports:
+      - "${RDFM_HOST_PORT:-5010}:5000"
+    volumes:
+      - rdfm_packages_production:/packages
+    networks:
+      - production_net
+
+networks:
+  production_net:
+    name: ${STACK_NETWORK_NAME:-vending-backpack-production-net}
+
+volumes:
+  backend_storage_production:
+    name: ${BACKEND_STORAGE_VOLUME:-backend_storage_production}
+  rdfm_db_data_production:
+    name: ${RDFM_DB_VOLUME:-rdfm_db_data_production}
+  rdfm_packages_production:
+    name: ${RDFM_PACKAGES_VOLUME:-rdfm_packages_production}
