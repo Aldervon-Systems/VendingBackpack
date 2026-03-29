@@ -61,7 +61,7 @@ Optional:
 - `BACKEND_BIND_ADDRESS=127.0.0.1`
 - `LANDING_BIND_ADDRESS=127.0.0.1`
 - `RDFM_BIND_ADDRESS=127.0.0.1`
-- `FRONTEND_HOST_PORT=19100`
+- `FRONTEND_HOST_PORT=9100`
 - `BACKEND_HOST_PORT=19101`
 - `LANDING_HOST_PORT=19060`
 - `RDFM_HOST_PORT=15010`
@@ -78,8 +78,8 @@ After a production deploy, verify:
 
 After a staging deploy, verify:
 - `https://staging.aldervon.com`
-- `http://127.0.0.1:19100/__frontend_health` from the host
-- `http://127.0.0.1:19100/health` from the host
+- `http://127.0.0.1:9100/__frontend_health` from the host
+- `http://127.0.0.1:9100/health` from the host
 - login redirects to the existing Keycloak instance
 - `https://staging.aldervon.com/device`
 - `http://127.0.0.1:15010` responds for RDFM from the host

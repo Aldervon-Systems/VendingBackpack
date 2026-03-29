@@ -25,7 +25,7 @@ Suggested hostnames:
 Because Caddy runs on the host rather than in Docker, the staging containers still need host port bindings so Caddy has something stable to proxy to.
 
 These bindings are intentionally limited to loopback by default:
-- frontend -> `127.0.0.1:19100`
+- frontend -> `127.0.0.1:9100`
 - backend -> `127.0.0.1:19101`
 - landing -> `127.0.0.1:19060`
 - RDFM -> `127.0.0.1:15010`
@@ -60,7 +60,7 @@ Optional:
 - `BACKEND_BIND_ADDRESS=127.0.0.1`
 - `LANDING_BIND_ADDRESS=127.0.0.1`
 - `RDFM_BIND_ADDRESS=127.0.0.1`
-- `FRONTEND_HOST_PORT=19100`
+- `FRONTEND_HOST_PORT=9100`
 - `BACKEND_HOST_PORT=19101`
 - `LANDING_HOST_PORT=19060`
 - `RDFM_HOST_PORT=15010`
@@ -81,8 +81,8 @@ Optional:
 
 After deploy, verify:
 - `https://staging.aldervon.com`
-- `http://127.0.0.1:19100/__frontend_health` from the host
-- `http://127.0.0.1:19100/health` from the host
+- `http://127.0.0.1:9100/__frontend_health` from the host
+- `http://127.0.0.1:9100/health` from the host
 - frontend login flow still redirects to the existing Keycloak instance
 - `https://staging.aldervon.com/device`
 - RDFM responds on `http://127.0.0.1:15010` from the host
