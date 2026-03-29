@@ -1,6 +1,9 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
+ARG AUTH_MODE=api
+ENV NEXT_PUBLIC_AUTH_MODE=$AUTH_MODE
+
 COPY package.json package-lock.json ./
 RUN npm ci
 
