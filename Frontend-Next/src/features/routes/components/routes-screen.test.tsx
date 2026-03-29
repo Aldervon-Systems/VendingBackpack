@@ -99,7 +99,67 @@ describe("RoutesScreen", () => {
     render(<RoutesScreen />);
 
     await screen.findByText("TODAY'S ACTIVE NODES");
+    expect(mocks.apiRequest).not.toHaveBeenCalledWith("/employees/routes");
     expect(screen.queryByText(/SELECT OPERATIVE FOR/i)).not.toBeInTheDocument();
     expect(screen.getByText(/M-120 \/ North Campus/i)).toBeInTheDocument();
+  });
+
+  it("reloads assignee names after route autogeneration", async () => {
+    let routeAssignments = [
+      { employee_id: "emp-07", employee_name: "Amanda Jones", stops: [{ id: "M-101" }] },
+      { employee_id: "emp-11", employee_name: "Luis Vega", stops: [{ id: "M-120" }] },
+    ];
+
+    mocks.apiRequest.mockImplementation(async (path: string) => {
+      if (path === "/routes") {
+        return {
+          locations: [
+            { id: "M-101", name: "Union Station", lat: 42.3524, lng: -71.0552, location: "Downtown Loop" },
+            { id: "M-120", name: "North Campus", lat: 42.3651, lng: -71.104, location: "Cambridge North" },
+          ],
+        };
+      }
+
+      if (path === "/employees") {
+        return [
+          { id: "emp-07", name: "Amanda Jones" },
+          { id: "emp-11", name: "Luis Vega" },
+          { id: "emp-13", name: "Maya Chen" },
+        ];
+      }
+
+      if (path === "/employees/routes") {
+        return routeAssignments;
+      }
+
+      if (path === "/routes/autogenerate") {
+        routeAssignments = [
+          { employee_id: "emp-13", employee_name: "Maya Chen", stops: [{ id: "M-101" }] },
+          { employee_id: "emp-07", employee_name: "Amanda Jones", stops: [{ id: "M-120" }] },
+        ];
+        return { status: "success" };
+      }
+
+      return {};
+    });
+
+    mocks.useAuth.mockReturnValue({
+      effectiveRole: "manager",
+      session: {
+        user: {
+          id: "user_admin",
+          name: "Admin Manager",
+        },
+      },
+    });
+
+    const { container } = render(<RoutesScreen />);
+
+    await screen.findByText("SELECT OPERATIVE FOR UNION STATION");
+    fireEvent.click(screen.getByRole("button", { name: "Autogenerate routes" }));
+
+    await waitFor(() => {
+      expect(container.querySelector('.routes-sheet__row[data-active="true"]')).toHaveTextContent("Maya Chen");
+    });
   });
 });

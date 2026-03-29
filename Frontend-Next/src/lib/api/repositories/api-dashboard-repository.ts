@@ -2,11 +2,8 @@
 
 import { apiRequest } from "@/lib/api/api-client";
 import type { DashboardRepository } from "@/lib/api/interfaces/dashboard-repository";
-import { MockDashboardRepository } from "@/lib/api/mock/mock-dashboard-repository";
 import type { UserRole } from "@/types/auth";
 import type { DashboardSnapshot, DashboardViewPreferences } from "@/types/dashboard";
-
-const fallbackRepository = new MockDashboardRepository();
 
 type LiveMachine = {
   id: string;
@@ -14,6 +11,61 @@ type LiveMachine = {
   status?: string;
   battery?: number;
 };
+
+type FeedKey = "inventory" | "employees" | "dailyStats" | "machines";
+
+function formatFeedLabel(feedKey: FeedKey) {
+  switch (feedKey) {
+    case "inventory":
+      return "inventory";
+    case "employees":
+      return "employees";
+    case "dailyStats":
+      return "daily stats";
+    case "machines":
+      return "machines";
+  }
+}
+
+function createUnavailableSnapshot(role: UserRole, failedFeeds: FeedKey[], hasAnyLiveData: boolean): DashboardSnapshot {
+  const feedSummary = failedFeeds.length
+    ? `Live ${failedFeeds.map(formatFeedLabel).join(", ")} ${failedFeeds.length === 1 ? "is" : "are"} currently unavailable.`
+    : "No live dashboard data is available for this session yet.";
+
+  return {
+    heroLabel: role === "manager" ? "Fleet revenue today" : "Your route progress",
+    heroValue: role === "manager" ? "$0" : "0 / 0 stops",
+    heroNote: hasAnyLiveData ? feedSummary : `Dashboard feed unavailable. ${feedSummary}`,
+    kpis:
+      role === "manager"
+        ? [
+            { label: "Active machines", value: "0", tone: "default" as const },
+            { label: "Employees", value: "0", tone: "default" as const },
+            { label: "Revenue today", value: "$0", tone: "warning" as const },
+          ]
+        : [
+            { label: "Stops left", value: "0", tone: "default" as const },
+            { label: "Machines online", value: "0", tone: "default" as const },
+            { label: "Low stock alerts", value: "0", tone: "warning" as const },
+          ],
+    machineSummaries: [],
+    routeHighlights: [feedSummary],
+  };
+}
+
+function appendFeedWarning(snapshot: DashboardSnapshot, failedFeeds: FeedKey[]): DashboardSnapshot {
+  if (!failedFeeds.length) {
+    return snapshot;
+  }
+
+  const feedSummary = `Unavailable live feeds: ${failedFeeds.map(formatFeedLabel).join(", ")}.`;
+
+  return {
+    ...snapshot,
+    heroNote: `${snapshot.heroNote} ${feedSummary}`.trim(),
+    routeHighlights: [...snapshot.routeHighlights, feedSummary],
+  };
+}
 
 function buildLiveSnapshot(
   role: UserRole,
@@ -85,19 +137,38 @@ function buildLiveSnapshot(
 
 export class ApiDashboardRepository implements DashboardRepository {
   async getSnapshot(role: UserRole): Promise<DashboardSnapshot> {
-    try {
-      const [inventory, employees, dailyStats, machines] = await Promise.all([
-        apiRequest<Record<string, Array<{ sku: string; name: string; qty: number; barcode: string }>>>("/inventory"),
-        apiRequest<Array<{ id: string; name: string }>>("/employees"),
-        apiRequest<Array<{ amount?: number }>>("/daily_stats"),
-        apiRequest<Array<{ id: string; name: string; status?: string }>>("/machines"),
-      ]);
+    const [inventoryResult, employeesResult, dailyStatsResult, machinesResult] = await Promise.allSettled([
+      apiRequest<Record<string, Array<{ sku: string; name: string; qty: number; barcode: string }>>>("/inventory"),
+      apiRequest<Array<{ id: string; name: string }>>("/employees"),
+      apiRequest<Array<{ amount?: number }>>("/daily_stats"),
+      apiRequest<Array<{ id: string; name: string; status?: string }>>("/machines"),
+    ]);
 
-      const liveSnapshot = buildLiveSnapshot(role, inventory ?? {}, employees ?? [], dailyStats ?? [], machines ?? []);
-      return liveSnapshot ?? fallbackRepository.getSnapshot(role);
-    } catch {
-      return fallbackRepository.getSnapshot(role);
+    const failedFeeds: FeedKey[] = [];
+
+    const inventory =
+      inventoryResult.status === "fulfilled"
+        ? (inventoryResult.value ?? {})
+        : (failedFeeds.push("inventory"), {});
+    const employees =
+      employeesResult.status === "fulfilled"
+        ? (employeesResult.value ?? [])
+        : (failedFeeds.push("employees"), []);
+    const dailyStats =
+      dailyStatsResult.status === "fulfilled"
+        ? (dailyStatsResult.value ?? [])
+        : (failedFeeds.push("dailyStats"), []);
+    const machines =
+      machinesResult.status === "fulfilled"
+        ? (machinesResult.value ?? [])
+        : (failedFeeds.push("machines"), []);
+
+    const liveSnapshot = buildLiveSnapshot(role, inventory, employees, dailyStats, machines);
+    if (!liveSnapshot) {
+      return createUnavailableSnapshot(role, failedFeeds, false);
     }
+
+    return appendFeedWarning(liveSnapshot, failedFeeds);
   }
 
   async getPreferences(): Promise<DashboardViewPreferences> {

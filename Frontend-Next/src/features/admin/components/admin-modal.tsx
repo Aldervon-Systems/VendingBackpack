@@ -122,7 +122,7 @@ export function AdminModal() {
               }}
             >
               <MapPin size={14} />
-              <span>USE DEMO HUB COORDS</span>
+              <span>USE HUB COORDS</span>
             </button>
             <ParityButton fullWidth onClick={handleAddMachine} disabled={isSaving}>
               {isSaving ? "WORKING..." : "REGISTER AS NETWORK NODE"}

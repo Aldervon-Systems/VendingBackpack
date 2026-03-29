@@ -3,7 +3,7 @@
 import { ParityCard } from "@/components/parity/parity-card";
 import { ParitySectionHeader } from "@/components/parity/parity-section-header";
 import { StatusPill } from "@/components/primitives/status-pill";
-import { MACHINE_ALERTS, RELEASE_RINGS } from "@/admin-center-data";
+import { useFleetViewModel } from "@/features/fleet/hooks/use-fleet-view-model";
 
 function toneForStatus(status: string) {
   if (status === "Healthy") {
@@ -18,10 +18,8 @@ function toneForStatus(status: string) {
 }
 
 export function FleetScreen() {
-  const healthyCount = MACHINE_ALERTS.filter((machine) => machine.status === "Healthy").length;
-  const watchCount = MACHINE_ALERTS.filter((machine) => machine.status === "Watch").length;
-  const offlineCount = MACHINE_ALERTS.filter((machine) => machine.status === "Offline").length;
-  const maintenanceCount = MACHINE_ALERTS.filter((machine) => machine.status === "Maintenance").length;
+  const { machineAlerts, releaseRings, monitoredCount, healthyCount, watchCount, offlineMaintenanceCount } =
+    useFleetViewModel();
 
   return (
     <div className="dashboard-screen">
@@ -32,7 +30,7 @@ export function FleetScreen() {
             <div className="metric-card__label">
               <span>MONITORED</span>
             </div>
-            <div className="metric-card__value">{MACHINE_ALERTS.length}</div>
+            <div className="metric-card__value">{monitoredCount}</div>
             <div className="metric-card__meta">Fleet nodes under admin watch</div>
           </ParityCard>
           <ParityCard className="metric-card">
@@ -53,7 +51,7 @@ export function FleetScreen() {
             <div className="metric-card__label">
               <span>OFFLINE / MAINTENANCE</span>
             </div>
-            <div className="metric-card__value">{offlineCount + maintenanceCount}</div>
+            <div className="metric-card__value">{offlineMaintenanceCount}</div>
             <div className="metric-card__meta">Active interventions required</div>
           </ParityCard>
         </div>
@@ -62,7 +60,7 @@ export function FleetScreen() {
       <section className="dashboard-block">
         <ParitySectionHeader title="MACHINE ALERTS" subtitle="FLEET CONTROL ACROSS ORGANIZATIONS" />
         <div className="machine-card-list">
-          {MACHINE_ALERTS.map((machine) => (
+          {machineAlerts.map((machine) => (
             <ParityCard key={machine.name} className="machine-stop-card">
               <div className="machine-stop-card__header">
                 <div>
@@ -95,7 +93,7 @@ export function FleetScreen() {
       <section className="dashboard-block">
         <ParitySectionHeader title="FIRMWARE SUMMARY" subtitle="CROSS-TENANT COMMAND POSTURE" />
         <div className="machine-card-list">
-          {RELEASE_RINGS.map((ring) => (
+          {releaseRings.map((ring) => (
             <ParityCard key={ring.title} className="machine-stop-card">
               <div className="machine-stop-card__header">
                 <div>

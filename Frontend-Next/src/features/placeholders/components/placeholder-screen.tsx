@@ -25,7 +25,7 @@ export function PlaceholderScreen({ eyebrow, title, description, bullets, manage
               <div className="eyebrow">Phase 1 boundary</div>
               <h3>Intentional placeholder</h3>
             </div>
-            <StatusPill label="Mock only" />
+            <StatusPill label="In progress" />
           </div>
           <p className="muted">This route exists so navigation, role rules, and layout are validated before deeper feature work starts.</p>
         </article>

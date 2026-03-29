@@ -25,13 +25,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
   const router = useRouter();
   const [railExpanded, setRailExpanded] = useState(false);
   const { session, effectiveRole, actualRole, logout } = useAuth();
-  const {
-    settingsOpen,
-    setSettingsOpen,
-    adminVerificationOpen,
-    setAdminVerificationOpen,
-    setAdminVerified,
-  } = useShell();
+  const { settingsOpen, setSettingsOpen, adminVerificationOpen, setAdminVerificationOpen } = useShell();
   const navItems = getNavItems(effectiveRole);
   const normalizedPath = pathname.endsWith("/") && pathname !== "/" ? pathname.slice(0, -1) : pathname;
   const pageTitle = pageTitles[normalizedPath] ?? "Workspace";
@@ -135,13 +129,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
 
       {adminVerificationOpen ? (
         <ParityOverlay onBackdropClick={() => setAdminVerificationOpen(false)}>
-          <AdminVerificationDialog
-            onClose={() => setAdminVerificationOpen(false)}
-            onVerified={() => {
-              setAdminVerified(true);
-              setAdminVerificationOpen(false);
-            }}
-          />
+          <AdminVerificationDialog onClose={() => setAdminVerificationOpen(false)} onVerified={() => setAdminVerificationOpen(false)} />
         </ParityOverlay>
       ) : null}
     </div>

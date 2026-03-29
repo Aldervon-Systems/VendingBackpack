@@ -7,8 +7,6 @@ type ShellContextValue = {
   setSettingsOpen: (value: boolean) => void;
   adminVerificationOpen: boolean;
   setAdminVerificationOpen: (value: boolean) => void;
-  adminVerified: boolean;
-  setAdminVerified: (value: boolean) => void;
 };
 
 const ShellContext = createContext<ShellContextValue | null>(null);
@@ -16,7 +14,6 @@ const ShellContext = createContext<ShellContextValue | null>(null);
 export function ShellProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [adminVerificationOpen, setAdminVerificationOpen] = useState(false);
-  const [adminVerified, setAdminVerified] = useState(false);
 
   const value = useMemo(
     () => ({
@@ -24,10 +21,8 @@ export function ShellProvider({ children }: Readonly<{ children: React.ReactNode
       setSettingsOpen,
       adminVerificationOpen,
       setAdminVerificationOpen,
-      adminVerified,
-      setAdminVerified,
     }),
-    [adminVerificationOpen, adminVerified, settingsOpen],
+    [adminVerificationOpen, settingsOpen],
   );
   return <ShellContext.Provider value={value}>{children}</ShellContext.Provider>;
 }

@@ -34,7 +34,6 @@ describe("SettingsPanel", () => {
     mocks.logout.mockResolvedValue(undefined);
     mocks.setEmployeeView.mockResolvedValue(undefined);
     mocks.useShell.mockReturnValue({
-      adminVerified: false,
       setAdminVerificationOpen: mocks.setAdminVerificationOpen,
     });
   });
@@ -51,6 +50,7 @@ describe("SettingsPanel", () => {
           organizationName: "Aldervon Systems",
         },
       },
+      adminVerified: false,
       actualRole: "manager",
       effectiveRole: "manager",
       logout: mocks.logout,
@@ -81,6 +81,7 @@ describe("SettingsPanel", () => {
           organizationName: "Aldervon Systems",
         },
       },
+      adminVerified: false,
       actualRole: "employee",
       effectiveRole: "employee",
       logout: mocks.logout,
@@ -103,6 +104,7 @@ describe("SettingsPanel", () => {
           organizationName: "Aldervon Systems",
         },
       },
+      adminVerified: false,
       actualRole: "manager",
       effectiveRole: "manager",
       logout: mocks.logout,

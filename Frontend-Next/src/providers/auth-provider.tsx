@@ -19,6 +19,7 @@ type AuthContextValue = {
   isRestoring: boolean;
   isAuthenticated: boolean;
   sessionExpired: boolean;
+  adminVerified: boolean;
   actualRole: UserRole | null;
   effectiveRole: UserRole | null;
   login: (credentials: AuthCredentials) => Promise<void>;
@@ -62,12 +63,14 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
     const actualRole = session?.user.role ?? null;
     const effectiveRole = session?.roleOverride ?? actualRole;
     const isAuthenticated = Boolean(session?.user);
+    const adminVerified = session?.adminVerified ?? false;
 
     return {
       session,
       isRestoring,
       isAuthenticated,
       sessionExpired,
+      adminVerified,
       actualRole,
       effectiveRole,
       async login(credentials) {
@@ -95,8 +98,15 @@ export function AuthProvider({ children }: Readonly<{ children: React.ReactNode 
       createOrganization(payload) {
         return authRepository.createOrganization(payload);
       },
-      verifyAdmin(payload) {
-        return authRepository.verifyAdmin(payload);
+      async verifyAdmin(payload) {
+        const verified = await authRepository.verifyAdmin(payload);
+        if (!verified) {
+          return false;
+        }
+
+        const nextSession = await authRepository.setAdminVerified(true);
+        setSession(nextSession);
+        return true;
       },
       updateWhitelist(organizationId, emails) {
         return authRepository.updateWhitelist(organizationId, emails);

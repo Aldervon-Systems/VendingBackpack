@@ -33,7 +33,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
         <div className="settings-panel__header">
           <div>
             <div className="parity-section-header__title">CONFIGURATION / SESSION</div>
-            <div className="parity-section-header__subtitle">LOCAL SHELL CONTROLS</div>
+            <div className="parity-section-header__subtitle">SESSION CONTROLS</div>
           </div>
           <ParityButton tone="ghost" onClick={onClose}>
             CLOSE
@@ -72,8 +72,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
               <strong>8 HOURS</strong>
             </div>
             <div className="settings-panel__toggle-copy">
-              This demo session persists locally so the admin shell can be reviewed before backend authentication is wired
-              in.
+              This session remains available throughout the current access window for platform administration tasks.
             </div>
             <div className="settings-panel__row">
               <span>ISSUED</span>

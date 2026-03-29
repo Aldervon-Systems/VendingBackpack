@@ -75,7 +75,7 @@ export type PublishRecord = {
 export type MachineConfigDetail = {
   summary: MachineConfigSummary;
   metadata: MachineMetadata;
-  backendState: "Mock Ready";
+  backendState: "Ready";
   publishedVersion: string;
   publishedRows: MachineConfigRow[];
   draftRows: MachineConfigRow[];

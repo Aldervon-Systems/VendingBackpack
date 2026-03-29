@@ -1,11 +1,9 @@
 "use client";
 
 import { CheckCircle2, ShieldCheck, UserRound } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { ParityButton } from "@/components/parity/parity-button";
 import { ParityCard } from "@/components/parity/parity-card";
-import { useAuth } from "@/providers/auth-provider";
-import { useShell } from "@/providers/shell-provider";
+import { useSettingsViewModel } from "@/features/settings/hooks/use-settings-view-model";
 import { APP_ROUTES } from "@/lib/routes";
 
 type SettingsPanelProps = {
@@ -13,16 +11,18 @@ type SettingsPanelProps = {
 };
 
 export function SettingsPanel({ onClose }: SettingsPanelProps) {
-  const router = useRouter();
-  const { session, actualRole, effectiveRole, logout, setEmployeeView } = useAuth();
-  const { adminVerified, setAdminVerificationOpen } = useShell();
-  const isManager = actualRole === "manager";
-  const employeeSimulationEnabled = isManager && effectiveRole === "employee";
-
-  function navigateTo(href: string) {
-    onClose();
-    router.push(href);
-  }
+  const {
+    session,
+    adminVerified,
+    actualRole,
+    effectiveRole,
+    isManager,
+    employeeSimulationEnabled,
+    setEmployeeView,
+    setAdminVerificationOpen,
+    navigateTo,
+    signOut,
+  } = useSettingsViewModel(onClose);
 
   return (
     <div className="settings-panel">
@@ -30,7 +30,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
         <div className="settings-panel__header">
           <div>
             <div className="parity-section-header__title">CONFIGURATION / SESSION</div>
-            <div className="parity-section-header__subtitle">LOCAL SHELL CONTROLS</div>
+            <div className="parity-section-header__subtitle">SESSION CONTROLS</div>
           </div>
           <ParityButton tone="ghost" onClick={onClose}>
             CLOSE
@@ -138,11 +138,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
           <ParityButton
             tone="ghost"
             fullWidth
-            onClick={async () => {
-              await logout();
-              onClose();
-              router.replace(APP_ROUTES.login);
-            }}
+            onClick={signOut}
           >
             SIGN OUT
           </ParityButton>
