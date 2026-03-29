@@ -99,6 +99,22 @@ export class MockAuthRepository implements AuthRepository {
     return delay(nextSession, 220);
   }
 
+  async setAdminVerified(verified: boolean): Promise<SessionState | null> {
+    const session = getStoredValue<SessionState>(STORAGE_KEYS.session, { validate: isSessionState });
+    if (!session) {
+      return delay(null);
+    }
+
+    const nextSession: SessionState = {
+      ...session,
+      adminVerified: verified,
+    };
+
+    const remaining = new Date(session.expiresAt).getTime() - Date.now();
+    setStoredValue(STORAGE_KEYS.session, nextSession, { ttlMs: Math.max(remaining, 1) });
+    return delay(nextSession, 120);
+  }
+
   async searchOrganizations(query: string): Promise<OrganizationSummary[]> {
     const organizations = [
       { id: "org_aldervon", name: "Aldervon Systems" },
@@ -143,6 +159,7 @@ function createSession({ user }: { user: SessionUser }): SessionState {
     accessToken: "mock_token",
     user,
     roleOverride: null,
+    adminVerified: false,
     issuedAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + SESSION_TTL_MS).toISOString(),
     authMode: "mock",

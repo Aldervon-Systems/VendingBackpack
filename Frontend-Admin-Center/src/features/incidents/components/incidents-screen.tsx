@@ -3,7 +3,7 @@
 import { ParityCard } from "@/components/parity/parity-card";
 import { ParitySectionHeader } from "@/components/parity/parity-section-header";
 import { StatusPill } from "@/components/primitives/status-pill";
-import { INCIDENTS, PLAYBOOK } from "@/admin-center-data";
+import { useIncidentsViewModel } from "@/features/incidents/hooks/use-incidents-view-model";
 
 function toneForSeverity(severity: string) {
   if (severity === "Critical" || severity === "High") {
@@ -14,9 +14,7 @@ function toneForSeverity(severity: string) {
 }
 
 export function IncidentsScreen() {
-  const criticalCount = INCIDENTS.filter((incident) => incident.severity === "Critical").length;
-  const highCount = INCIDENTS.filter((incident) => incident.severity === "High").length;
-  const mediumCount = INCIDENTS.filter((incident) => incident.severity === "Medium").length;
+  const { incidents, playbook, openCount, criticalCount, highCount, mediumCount } = useIncidentsViewModel();
 
   return (
     <div className="dashboard-screen">
@@ -27,7 +25,7 @@ export function IncidentsScreen() {
             <div className="metric-card__label">
               <span>OPEN</span>
             </div>
-            <div className="metric-card__value">{INCIDENTS.length}</div>
+            <div className="metric-card__value">{openCount}</div>
             <div className="metric-card__meta">Total incidents awaiting action</div>
           </ParityCard>
           <ParityCard className="metric-card">
@@ -57,7 +55,7 @@ export function IncidentsScreen() {
       <section className="dashboard-block">
         <ParitySectionHeader title="INCIDENT BOARD" subtitle="EVERY ACTIVE PLATFORM ISSUE" />
         <div className="machine-card-list">
-          {INCIDENTS.map((incident) => (
+          {incidents.map((incident) => (
             <ParityCard key={incident.title} className="machine-stop-card">
               <div className="machine-stop-card__header">
                 <div>
@@ -92,7 +90,7 @@ export function IncidentsScreen() {
       <section className="dashboard-block">
         <ParitySectionHeader title="OPERATOR RULES" subtitle="DURING ACTIVE INCIDENTS" />
         <div className="notes-list">
-          {PLAYBOOK.map((step) => (
+          {playbook.map((step) => (
             <ParityCard key={step.title} className="note-row">
               <strong>{step.title}</strong>
               <p>{step.copy}</p>

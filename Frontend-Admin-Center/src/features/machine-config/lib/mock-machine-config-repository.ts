@@ -1,4 +1,5 @@
 import { MACHINE_CONFIG_RECORDS, type MachineConfigRecord } from "@/features/machine-config/lib/mock-machine-config-data";
+import type { MachineConfigRepository } from "@/features/machine-config/lib/machine-config-repository";
 import {
   buildMachineSummary,
   buildValidationIssues,
@@ -28,7 +29,7 @@ function detailFromRecord(record: MachineConfigRecord): MachineConfigDetail {
       record.draftUpdatedAt,
     ),
     metadata: { ...record.metadata },
-    backendState: "Mock Ready",
+    backendState: "Ready",
     publishedVersion: record.publishedVersion,
     publishedRows,
     draftRows,
@@ -59,7 +60,7 @@ function nextVersion(version: string) {
   return `v${major}.${minor}`;
 }
 
-export class MockMachineConfigRepository {
+export class MockMachineConfigRepository implements MachineConfigRepository {
   async listMachines(): Promise<MachineConfigSummary[]> {
     return store.map((record) => detailFromRecord(record).summary);
   }

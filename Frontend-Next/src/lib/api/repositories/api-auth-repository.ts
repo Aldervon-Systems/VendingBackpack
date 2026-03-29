@@ -21,13 +21,15 @@ function createSessionState({
   accessToken,
   user,
   roleOverride = null,
+  adminVerified = false,
   authMode = "api",
 }: Pick<SessionState, "accessToken" | "user"> &
-  Partial<Pick<SessionState, "roleOverride" | "authMode">>): SessionState {
+  Partial<Pick<SessionState, "roleOverride" | "adminVerified" | "authMode">>): SessionState {
   return {
     accessToken,
     user,
     roleOverride,
+    adminVerified,
     issuedAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + SESSION_TTL_MS).toISOString(),
     authMode,
@@ -44,6 +46,24 @@ function clearSession() {
   removeStoredValue(STORAGE_KEYS.session);
 }
 
+function normalizeSession(session: SessionState): SessionState {
+  return {
+    ...session,
+    adminVerified: session.adminVerified === true,
+  };
+}
+
+function persistSessionWithCurrentExpiry(session: SessionState) {
+  const remaining = new Date(session.expiresAt).getTime() - Date.now();
+  if (remaining <= 0) {
+    clearSession();
+    return;
+  }
+
+  setStoredValue(STORAGE_KEYS.session, session, { ttlMs: remaining });
+  setAccessToken(session.accessToken);
+}
+
 export class ApiAuthRepository implements AuthRepository {
   async restoreSession(): Promise<SessionState | null> {
     const session = getStoredValue<SessionState>(STORAGE_KEYS.session, { validate: isSessionState });
@@ -53,11 +73,12 @@ export class ApiAuthRepository implements AuthRepository {
       return null;
     }
 
-    setAccessToken(session.accessToken);
+    const normalizedSession = normalizeSession(session);
+    setAccessToken(normalizedSession.accessToken);
 
     try {
       await apiRequest<{ user: Record<string, unknown> }>("/me", { method: "GET" });
-      return session;
+      return normalizedSession;
     } catch {
       clearSession();
       return null;
@@ -143,17 +164,32 @@ export class ApiAuthRepository implements AuthRepository {
   async setRoleOverride(role: UserRole | null): Promise<SessionState | null> {
     const session = getStoredValue<SessionState>(STORAGE_KEYS.session, { validate: isSessionState });
     if (!session || session.user.role !== "manager") {
-      return session;
+      return session ? normalizeSession(session) : session;
     }
 
     const nextSession: SessionState = {
-      ...session,
+      ...normalizeSession(session),
       roleOverride: role,
       issuedAt: new Date().toISOString(),
       expiresAt: new Date(Date.now() + SESSION_TTL_MS).toISOString(),
     };
 
     persistSession(nextSession);
+    return nextSession;
+  }
+
+  async setAdminVerified(verified: boolean): Promise<SessionState | null> {
+    const session = getStoredValue<SessionState>(STORAGE_KEYS.session, { validate: isSessionState });
+    if (!session) {
+      return null;
+    }
+
+    const nextSession: SessionState = {
+      ...normalizeSession(session),
+      adminVerified: verified,
+    };
+
+    persistSessionWithCurrentExpiry(nextSession);
     return nextSession;
   }
 

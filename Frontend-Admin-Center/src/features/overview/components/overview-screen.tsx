@@ -3,13 +3,7 @@
 import { ParityCard } from "@/components/parity/parity-card";
 import { ParitySectionHeader } from "@/components/parity/parity-section-header";
 import { StatusPill } from "@/components/primitives/status-pill";
-import {
-  GUARDRAILS,
-  OVERVIEW_METRICS,
-  PRIORITY_QUEUE,
-  RECENT_ACTIONS,
-  RELEASE_RINGS,
-} from "@/admin-center-data";
+import { useOverviewViewModel } from "@/features/overview/hooks/use-overview-view-model";
 
 function toneForQueueTag(tag: string) {
   const normalized = tag.toLowerCase();
@@ -33,12 +27,14 @@ function toneForRing(ringTone: string) {
 }
 
 export function OverviewScreen() {
+  const { metrics, priorityQueue, releaseRings, recentActions, guardrails } = useOverviewViewModel();
+
   return (
     <div className="dashboard-screen">
       <section className="dashboard-block">
         <ParitySectionHeader title="SYSTEM OVERVIEW" subtitle="CROSS-TENANT POSTURE" />
         <div className="dashboard-metrics">
-          {OVERVIEW_METRICS.map((metric) => (
+          {metrics.map((metric) => (
             <ParityCard key={metric.label} className="metric-card">
               <div className="metric-card__label">
                 <span>{metric.label.toUpperCase()}</span>
@@ -53,7 +49,7 @@ export function OverviewScreen() {
       <section className="dashboard-block">
         <ParitySectionHeader title="CURRENT PLATFORM QUEUE" subtitle="IMMEDIATE PRIORITIES" />
         <div className="machine-card-list">
-          {PRIORITY_QUEUE.map((item) => (
+          {priorityQueue.map((item) => (
             <ParityCard key={item.title} className="machine-stop-card">
               <div className="machine-stop-card__header">
                 <div>
@@ -86,7 +82,7 @@ export function OverviewScreen() {
       <section className="dashboard-block">
         <ParitySectionHeader title="RING STATUS" subtitle="RELEASE POSTURE" />
         <div className="machine-card-list">
-          {RELEASE_RINGS.map((ring) => (
+          {releaseRings.map((ring) => (
             <ParityCard key={ring.title} className="machine-stop-card">
               <div className="machine-stop-card__header">
                 <div>
@@ -109,7 +105,7 @@ export function OverviewScreen() {
       <section className="dashboard-block">
         <ParitySectionHeader title="RECENT ADMIN ACTIONS" subtitle="OPERATOR FEED" />
         <div className="notes-list">
-          {RECENT_ACTIONS.map((item) => (
+          {recentActions.map((item) => (
             <ParityCard key={item.title} className="note-row">
               <strong>{item.title}</strong>
               <p>{item.copy}</p>
@@ -121,7 +117,7 @@ export function OverviewScreen() {
       <section className="dashboard-block">
         <ParitySectionHeader title="BOUNDARY REMINDERS" subtitle="PLATFORM GUARDRAILS" />
         <div className="notes-list">
-          {GUARDRAILS.map((item) => (
+          {guardrails.map((item) => (
             <ParityCard key={item.title} className="note-row">
               <strong>{item.title}</strong>
               <p>{item.copy}</p>

@@ -16,6 +16,7 @@ export interface AuthRepository {
   signup(payload: SignupPayload): Promise<SessionState>;
   logout(): Promise<void>;
   setRoleOverride(role: UserRole | null): Promise<SessionState | null>;
+  setAdminVerified(verified: boolean): Promise<SessionState | null>;
   searchOrganizations(query: string): Promise<OrganizationSummary[]>;
   createOrganization(payload: CreateOrganizationPayload): Promise<CreateOrganizationResponse>;
   verifyAdmin(payload: VerifyAdminPayload): Promise<boolean>;

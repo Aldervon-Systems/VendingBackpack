@@ -12,6 +12,7 @@ export type SessionUser = {
 export type SessionState = {
   user: SessionUser;
   roleOverride: UserRole | null;
+  adminVerified: boolean;
   issuedAt: string;
   expiresAt: string;
   accessToken: string;
@@ -94,6 +95,7 @@ export function isSessionState(value: unknown): value is SessionState {
     typeof sessionUser.organizationName === "string" &&
     isUserRole(sessionUser.role) &&
     (candidate.roleOverride === null || isUserRole(candidate.roleOverride)) &&
+    (candidate.adminVerified === undefined || typeof candidate.adminVerified === "boolean") &&
     typeof candidate.issuedAt === "string" &&
     typeof candidate.expiresAt === "string" &&
     typeof candidate.accessToken === "string" &&

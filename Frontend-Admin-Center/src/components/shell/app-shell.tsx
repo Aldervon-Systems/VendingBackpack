@@ -56,31 +56,33 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
             <span className="app-rail__wordmark">ADMIN CENTER</span>
           </div>
 
-          <nav className="app-nav">
-            {navItems.map(({ href, icon: Icon, label }) => (
-              <Link key={href} href={href} className="app-nav__item" data-active={normalizedPath === href}>
-                <Icon size={20} />
-                <span className="app-nav__label">{label}</span>
-              </Link>
-            ))}
-          </nav>
+          <div className="app-rail__body">
+            <nav className="app-nav">
+              {navItems.map(({ href, icon: Icon, label }) => (
+                <Link key={href} href={href} className="app-nav__item" data-active={normalizedPath === href}>
+                  <Icon size={20} />
+                  <span className="app-nav__label">{label}</span>
+                </Link>
+              ))}
+            </nav>
 
-          <div className="app-rail__footer">
-            <button className="app-nav__item" type="button" onClick={() => setSettingsOpen(true)}>
-              <Settings size={20} />
-              <span className="app-nav__label">Settings</span>
-            </button>
-            <button
-              className="app-nav__item"
-              type="button"
-              onClick={async () => {
-                await logout();
-                router.replace(APP_ROUTES.login);
-              }}
-            >
-              <LogOut size={20} />
-              <span className="app-nav__label">Sign Out</span>
-            </button>
+            <div className="app-rail__footer">
+              <button className="app-nav__item" type="button" onClick={() => setSettingsOpen(true)}>
+                <Settings size={20} />
+                <span className="app-nav__label">Settings</span>
+              </button>
+              <button
+                className="app-nav__item"
+                type="button"
+                onClick={async () => {
+                  await logout();
+                  router.replace(APP_ROUTES.login);
+                }}
+              >
+                <LogOut size={20} />
+                <span className="app-nav__label">Sign Out</span>
+              </button>
+            </div>
           </div>
         </aside>
 

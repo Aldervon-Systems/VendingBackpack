@@ -1,14 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { ParityButton } from "@/components/parity/parity-button";
 import { ParityCard } from "@/components/parity/parity-card";
 import { ParityField } from "@/components/parity/parity-field";
 import { ParitySectionHeader } from "@/components/parity/parity-section-header";
 import { StatusPill } from "@/components/primitives/status-pill";
-import { ONBOARDING_QUEUE, ORGANIZATIONS } from "@/admin-center-data";
-
-type OrganizationHealthFilter = "All" | "Healthy" | "Watch" | "Escalated" | "Review" | "Launching";
+import { useOrganizationsViewModel, type OrganizationHealthFilter } from "@/features/organizations/hooks/use-organizations-view-model";
 
 function toneForHealth(health: OrganizationHealthFilter | string) {
   if (health === "Healthy") {
@@ -23,23 +20,8 @@ function toneForHealth(health: OrganizationHealthFilter | string) {
 }
 
 export function OrganizationsScreen() {
-  const [healthFilter, setHealthFilter] = useState<OrganizationHealthFilter>("All");
-  const [query, setQuery] = useState("");
-
-  const filteredOrganizations = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    return ORGANIZATIONS.filter((organization) => {
-      const matchesHealth = healthFilter === "All" || organization.health === healthFilter;
-      const matchesQuery =
-        normalizedQuery.length === 0 ||
-        organization.name.toLowerCase().includes(normalizedQuery) ||
-        organization.region.toLowerCase().includes(normalizedQuery) ||
-        organization.plan.toLowerCase().includes(normalizedQuery);
-
-      return matchesHealth && matchesQuery;
-    });
-  }, [healthFilter, query]);
+  const { healthFilter, query, filteredOrganizations, onboardingQueue, setHealthFilter, setQuery, clearQuery } =
+    useOrganizationsViewModel();
 
   return (
     <div className="corporate-screen">
@@ -83,7 +65,7 @@ export function OrganizationsScreen() {
 
           <div className="corporate-toolbar__meta">
             <span>{filteredOrganizations.length} organizations in view</span>
-            <ParityButton tone="ghost" onClick={() => setQuery("")}>
+            <ParityButton tone="ghost" onClick={clearQuery}>
               CLEAR SEARCH
             </ParityButton>
           </div>
@@ -132,7 +114,7 @@ export function OrganizationsScreen() {
       <section className="dashboard-block">
         <ParitySectionHeader title="LAUNCH READINESS" subtitle="ONBOARDING QUEUE" />
         <div className="sheet-panel__list">
-          {ONBOARDING_QUEUE.map((item) => (
+          {onboardingQueue.map((item) => (
             <ParityCard key={item.title} className="sheet-panel__row">
               <div>
                 <strong>{item.title}</strong>

@@ -19,10 +19,12 @@ export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const { login, signup, searchOrganizations, sessionExpired } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [role, setRole] = useState<UserRole>("employee");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrganization, setSelectedOrganization] = useState<{ id: string; name: string } | null>(null);
   const [organizationResults, setOrganizationResults] = useState<OrganizationSummary[]>([]);
+  const [organizationSearchError, setOrganizationSearchError] = useState("");
   const [formState, setFormState] = useState({
     name: "",
     email: "",
@@ -35,6 +37,7 @@ export function AuthForm({ mode }: AuthFormProps) {
     async function runSearch() {
       if (selectedOrganization || searchQuery.trim().length < 2) {
         setOrganizationResults([]);
+        setOrganizationSearchError("");
         return;
       }
 
@@ -42,10 +45,12 @@ export function AuthForm({ mode }: AuthFormProps) {
         const results = await searchOrganizations(searchQuery.trim());
         if (active) {
           setOrganizationResults(results);
+          setOrganizationSearchError("");
         }
-      } catch {
+      } catch (nextError) {
         if (active) {
           setOrganizationResults([]);
+          setOrganizationSearchError(nextError instanceof Error ? nextError.message : "Organization lookup failed");
         }
       }
     }
@@ -63,6 +68,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
+    setSubmitError("");
 
     try {
       if (mode === "login") {
@@ -84,6 +90,8 @@ export function AuthForm({ mode }: AuthFormProps) {
       }
 
       router.replace(APP_ROUTES.dashboard);
+    } catch (nextError) {
+      setSubmitError(nextError instanceof Error ? nextError.message : "Authentication failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -150,6 +158,8 @@ export function AuthForm({ mode }: AuthFormProps) {
                 ))}
               </div>
             ) : null}
+
+            {organizationSearchError ? <div className="form-error form-error--compact">{organizationSearchError.toUpperCase()}</div> : null}
           </div>
         )}
 
@@ -195,6 +205,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           />
 
           {sessionExpired ? <div className="form-error">SESSION EXPIRED</div> : null}
+          {submitError ? <div className="form-error">{submitError.toUpperCase()}</div> : null}
 
           <ParityButton className="auth-primary" type="submit" fullWidth disabled={isSubmitting}>
             {isSubmitting ? "WORKING..." : mode === "login" ? "AUTHENTICATE" : "INITIALIZE ACCOUNT"}

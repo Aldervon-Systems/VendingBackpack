@@ -1,29 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { ParityButton } from "@/components/parity/parity-button";
 import { ParityCard } from "@/components/parity/parity-card";
 import { ParityField } from "@/components/parity/parity-field";
 import { ParitySectionHeader } from "@/components/parity/parity-section-header";
 import { StatusPill } from "@/components/primitives/status-pill";
-import { SCHEDULED_BROADCASTS } from "@/admin-center-data";
+import { useBroadcastsViewModel } from "@/features/broadcasts/hooks/use-broadcasts-view-model";
 
 type BroadcastState = "Scheduled" | "Draft" | "Sent";
-
-type BroadcastEntry = {
-  title: string;
-  audience: string;
-  state: BroadcastState;
-  sendAt: string;
-  body: string;
-};
-
-const defaultComposer = {
-  title: "Platform status update for tenant admins",
-  audience: "Tenant admins",
-  body:
-    "Admin center update:\n- Harbor Point Coffee remains in billing watch until the retry window closes.\n- North Pier Foods is under active fleet recovery with field dispatch in motion.\n- Manager traffic stays in Frontend-Next while platform operators complete cross-tenant actions.",
-};
 
 function toneForState(state: BroadcastState) {
   if (state === "Sent") {
@@ -38,25 +22,8 @@ function toneForState(state: BroadcastState) {
 }
 
 export function BroadcastsScreen() {
-  const [composer, setComposer] = useState(defaultComposer);
-  const [broadcastQueue, setBroadcastQueue] = useState<BroadcastEntry[]>(
-    SCHEDULED_BROADCASTS.map((broadcast) => ({ ...broadcast, state: "Scheduled" as const })),
-  );
-
-  const queueCount = useMemo(() => broadcastQueue.length, [broadcastQueue.length]);
-
-  function handleQueueBroadcast() {
-    const nextBroadcast: BroadcastEntry = {
-      title: composer.title.trim() || "Untitled broadcast",
-      audience: composer.audience.trim() || "Tenant admins",
-      state: "Draft",
-      sendAt: "Queued locally",
-      body: composer.body.trim() || "No body text provided.",
-    };
-
-    setBroadcastQueue((current) => [nextBroadcast, ...current]);
-    setComposer(defaultComposer);
-  }
+  const { composer, broadcastQueue, queueCount, draftCount, sentCount, setComposer, resetComposer, queueBroadcast } =
+    useBroadcastsViewModel();
 
   return (
     <div className="dashboard-screen">
@@ -74,18 +41,14 @@ export function BroadcastsScreen() {
             <div className="metric-card__label">
               <span>DRAFTS</span>
             </div>
-            <div className="metric-card__value">
-              {broadcastQueue.filter((broadcast) => broadcast.state === "Draft").length}
-            </div>
-            <div className="metric-card__meta">Locally staged notices</div>
+            <div className="metric-card__value">{draftCount}</div>
+            <div className="metric-card__meta">Staged notices</div>
           </ParityCard>
           <ParityCard className="metric-card">
             <div className="metric-card__label">
               <span>SENT</span>
             </div>
-            <div className="metric-card__value">
-              {broadcastQueue.filter((broadcast) => broadcast.state === "Sent").length}
-            </div>
+            <div className="metric-card__value">{sentCount}</div>
             <div className="metric-card__meta">Completed communications</div>
           </ParityCard>
         </div>
@@ -121,8 +84,8 @@ export function BroadcastsScreen() {
               />
             </div>
             <div className="modal-actions">
-              <ParityButton onClick={handleQueueBroadcast}>QUEUE BROADCAST</ParityButton>
-              <ParityButton tone="ghost" onClick={() => setComposer(defaultComposer)}>
+              <ParityButton onClick={queueBroadcast}>QUEUE BROADCAST</ParityButton>
+              <ParityButton tone="ghost" onClick={resetComposer}>
                 LOAD TEMPLATE
               </ParityButton>
             </div>

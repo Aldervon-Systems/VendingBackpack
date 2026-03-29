@@ -741,6 +741,7 @@ button {
   display: grid;
   flex: 1;
   gap: 4px;
+  align-content: start;
   min-height: 0;
   overflow: auto;
   padding: 0 8px 12px;

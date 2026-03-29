@@ -655,14 +655,17 @@ button {
 }
 
 .shell-page {
-  min-height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .app-shell {
   --app-rail-width: 64px;
   display: grid;
   grid-template-columns: var(--app-rail-width) minmax(0, 1fr);
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .app-shell[data-rail-expanded="true"] {
@@ -670,13 +673,12 @@ button {
 }
 
 .app-rail {
-  position: sticky;
-  top: 0;
   z-index: 20;
   display: flex;
   flex-direction: column;
   width: var(--app-rail-width);
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
   background: var(--surface);
   border-right: 1px solid var(--border);
@@ -727,16 +729,30 @@ button {
   color: var(--text);
 }
 
-.app-nav,
-.app-rail__footer {
+.app-rail__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-nav {
   display: grid;
   gap: 4px;
-  padding: 0 8px;
+  flex: 1;
+  align-content: start;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 8px 12px;
+  overscroll-behavior: contain;
 }
 
 .app-rail__footer {
-  margin-top: auto;
-  padding-bottom: 16px;
+  display: grid;
+  flex-shrink: 0;
+  gap: 4px;
+  padding: 12px 8px 16px;
 }
 
 .app-nav__item {
@@ -757,7 +773,11 @@ button {
 }
 
 .app-main {
+  display: grid;
+  grid-template-rows: 64px minmax(0, 1fr);
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .app-header {
@@ -804,6 +824,10 @@ button {
 }
 
 .app-content {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
   padding: 0 24px 24px;
 }
 
@@ -812,6 +836,8 @@ button {
 }
 
 .settings-panel__sheet {
+  max-height: min(720px, calc(100vh - 48px));
+  overflow: auto;
   padding: 24px;
   border-radius: var(--radius-modal);
   animation: motion-panel-enter 160ms ease-out;

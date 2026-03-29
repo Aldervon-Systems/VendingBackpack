@@ -3,9 +3,18 @@
 import { ParityCard } from "@/components/parity/parity-card";
 import { ParitySectionHeader } from "@/components/parity/parity-section-header";
 import { StatusPill } from "@/components/primitives/status-pill";
-import { ACCESS_POLICIES, APPROVAL_REQUESTS, ADMIN_PROFILES } from "@/admin-center-data";
+import { useAccessViewModel } from "@/features/access/hooks/use-access-view-model";
 
 export function AccessScreen() {
+  const {
+    adminProfiles,
+    approvalRequests,
+    accessPolicies,
+    approvedAdminCount,
+    pendingRequestCount,
+    policySetCount,
+  } = useAccessViewModel();
+
   return (
     <div className="dashboard-screen">
       <section className="dashboard-block">
@@ -15,21 +24,21 @@ export function AccessScreen() {
             <div className="metric-card__label">
               <span>APPROVED ADMINS</span>
             </div>
-            <div className="metric-card__value">{ADMIN_PROFILES.length}</div>
+            <div className="metric-card__value">{approvedAdminCount}</div>
             <div className="metric-card__meta">Approved platform operators</div>
           </ParityCard>
           <ParityCard className="metric-card">
             <div className="metric-card__label">
               <span>PENDING REQUESTS</span>
             </div>
-            <div className="metric-card__value">{APPROVAL_REQUESTS.length}</div>
+            <div className="metric-card__value">{pendingRequestCount}</div>
             <div className="metric-card__meta">Access approvals awaiting review</div>
           </ParityCard>
           <ParityCard className="metric-card">
             <div className="metric-card__label">
               <span>POLICY SETS</span>
             </div>
-            <div className="metric-card__value">{ACCESS_POLICIES.length}</div>
+            <div className="metric-card__value">{policySetCount}</div>
             <div className="metric-card__meta">Rules enforcing session safety</div>
           </ParityCard>
         </div>
@@ -38,7 +47,7 @@ export function AccessScreen() {
       <section className="dashboard-block">
         <ParitySectionHeader title="APPROVED ADMIN DIRECTORY" subtitle="WHO CAN ENTER THIS WORKSPACE" />
         <div className="machine-card-list">
-          {ADMIN_PROFILES.map((profile) => (
+          {adminProfiles.map((profile) => (
             <ParityCard key={profile.email} className="machine-stop-card">
               <div className="machine-stop-card__header">
                 <div>
@@ -73,7 +82,7 @@ export function AccessScreen() {
       <section className="dashboard-block">
         <ParitySectionHeader title="PENDING APPROVALS" subtitle="ADMIN ACCESS REVIEW AND APPROVAL FLOW" />
         <div className="machine-card-list">
-          {APPROVAL_REQUESTS.map((request) => (
+          {approvalRequests.map((request) => (
             <ParityCard key={`${request.name}-${request.organization}`} className="machine-stop-card">
               <div className="machine-stop-card__header">
                 <div>
@@ -104,7 +113,7 @@ export function AccessScreen() {
       <section className="dashboard-block">
         <ParitySectionHeader title="ACCESS POLICIES" subtitle="SESSION SAFETY AND CONTROL RULES" />
         <div className="notes-list">
-          {ACCESS_POLICIES.map((policy) => (
+          {accessPolicies.map((policy) => (
             <ParityCard key={policy.title} className="note-row">
               <strong>{policy.title}</strong>
               <p>{policy.copy}</p>

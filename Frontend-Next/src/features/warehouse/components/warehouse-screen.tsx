@@ -25,16 +25,11 @@ type ShipmentRow = {
   status: string;
 };
 
-const fallbackShipments: ShipmentRow[] = [
-  { id: "ship-01", description: "Downtown restock wave", amount: 120, date: "03/19/2026", status: "scheduled" },
-  { id: "ship-02", description: "Cold beverage intake", amount: 48, date: "03/20/2026", status: "scheduled" },
-];
-
 export function WarehouseScreen() {
   const { effectiveRole } = useAuth();
   const isManager = effectiveRole === "manager";
   const [inventoryRows, setInventoryRows] = useState<InventoryRow[]>([]);
-  const [shipments, setShipments] = useState<ShipmentRow[]>(fallbackShipments);
+  const [shipments, setShipments] = useState<ShipmentRow[]>([]);
   const [shipmentsOpen, setShipmentsOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -50,20 +45,32 @@ export function WarehouseScreen() {
     setIsLoading(true);
     setError("");
 
-    try {
-      const [warehouseRows, shipmentRows] = await Promise.all([
-        apiRequest<InventoryRow[]>("/warehouse"),
-        apiRequest<ShipmentRow[]>("/warehouse/shipments"),
-      ]);
+    const [warehouseResult, shipmentResult] = await Promise.allSettled([
+      apiRequest<InventoryRow[]>("/warehouse"),
+      isManager ? apiRequest<ShipmentRow[]>("/warehouse/shipments") : Promise.resolve([]),
+    ]);
 
-      setInventoryRows(Array.isArray(warehouseRows) ? warehouseRows : []);
-      setShipments(Array.isArray(shipmentRows) && shipmentRows.length ? shipmentRows : fallbackShipments);
-    } catch {
+    const nextErrors: string[] = [];
+
+    if (warehouseResult.status === "fulfilled") {
+      setInventoryRows(Array.isArray(warehouseResult.value) ? warehouseResult.value : []);
+    } else {
       setInventoryRows([]);
-      setShipments(fallbackShipments);
-    } finally {
-      setIsLoading(false);
+      nextErrors.push("warehouse inventory");
     }
+
+    if (shipmentResult.status === "fulfilled") {
+      setShipments(Array.isArray(shipmentResult.value) ? shipmentResult.value : []);
+    } else {
+      setShipments([]);
+      nextErrors.push("shipment schedule");
+    }
+
+    if (nextErrors.length) {
+      setError(`Live ${nextErrors.join(" and ")} could not be loaded`);
+    }
+
+    setIsLoading(false);
   }
 
   useEffect(() => {
@@ -71,6 +78,11 @@ export function WarehouseScreen() {
   }, []);
 
   async function handleCommitScan() {
+    if (!isManager) {
+      setError("Warehouse intake is only available in manager mode");
+      return;
+    }
+
     setIsLoading(true);
     setError("");
 
@@ -120,6 +132,11 @@ export function WarehouseScreen() {
   }
 
   async function handleScheduleShipment() {
+    if (!isManager) {
+      setError("Shipment scheduling is only available in manager mode");
+      return;
+    }
+
     setIsLoading(true);
     setError("");
 
@@ -187,9 +204,11 @@ export function WarehouseScreen() {
         <div className="warehouse-empty-state">NO INVENTORY DETECTED</div>
       )}
 
-      <button className="warehouse-fab" type="button" aria-label="Open scanner" onClick={() => setScannerOpen(true)}>
-        <ScanLine size={28} />
-      </button>
+      {isManager ? (
+        <button className="warehouse-fab" type="button" aria-label="Open scanner" onClick={() => setScannerOpen(true)}>
+          <ScanLine size={28} />
+        </button>
+      ) : null}
 
       {shipmentsOpen ? (
         <ParityOverlay align="sheet" onBackdropClick={() => setShipmentsOpen(false)}>
@@ -204,18 +223,22 @@ export function WarehouseScreen() {
               </button>
             </div>
             <div className="sheet-panel__list">
-              {shipments.map((shipment) => (
-                <div key={shipment.id} className="sheet-panel__row">
-                  <div>
-                    <strong>{shipment.description.toUpperCase()}</strong>
-                    <div>{shipment.date}</div>
+              {shipments.length ? (
+                shipments.map((shipment) => (
+                  <div key={shipment.id} className="sheet-panel__row">
+                    <div>
+                      <strong>{shipment.description.toUpperCase()}</strong>
+                      <div>{shipment.date}</div>
+                    </div>
+                    <div className="sheet-panel__amount">
+                      <strong>{shipment.amount}</strong>
+                      <span>UNITS</span>
+                    </div>
                   </div>
-                  <div className="sheet-panel__amount">
-                    <strong>{shipment.amount}</strong>
-                    <span>UNITS</span>
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <div className="routes-sheet__empty">No scheduled shipments are currently available.</div>
+              )}
             </div>
           </div>
         </ParityOverlay>
@@ -251,7 +274,7 @@ export function WarehouseScreen() {
 
       {scannerOpen ? (
         <ParityOverlay onBackdropClick={() => setScannerOpen(false)}>
-          <ParityModalFrame title="REGISTER NEW SKU" subtitle="Mock scanner shell for mobile and desktop." onClose={() => setScannerOpen(false)}>
+          <ParityModalFrame title="REGISTER NEW SKU" subtitle="Live warehouse intake for manager sessions." onClose={() => setScannerOpen(false)}>
             <div className="modal-form">
               <ParityField
                 id="barcode"
