@@ -1,4 +1,4 @@
-import { Building2, LayoutGrid, Megaphone, Radar, ShieldCheck, TriangleAlert } from "lucide-react";
+import { Building2, LayoutGrid, Megaphone, Radar, ShieldCheck, TriangleAlert, Wrench } from "lucide-react";
 import { APP_ROUTES } from "@/lib/routes";
 
 export type NavItem = {
@@ -12,6 +12,7 @@ export function getNavItems(): NavItem[] {
     { href: APP_ROUTES.overview, label: "Overview", icon: LayoutGrid },
     { href: APP_ROUTES.organizations, label: "Organizations", icon: Building2 },
     { href: APP_ROUTES.access, label: "Access", icon: ShieldCheck },
+    { href: APP_ROUTES.machineConfig, label: "Machine Config", icon: Wrench },
     { href: APP_ROUTES.fleet, label: "Fleet", icon: Radar },
     { href: APP_ROUTES.incidents, label: "Incidents", icon: TriangleAlert },
     { href: APP_ROUTES.broadcasts, label: "Broadcasts", icon: Megaphone },

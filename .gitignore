@@ -98,6 +98,8 @@ dotenv environment variables file
 .env.test.local
 .env.production.local
 
+.codex/
+
 parcel-bundler cache (https://parceljs.org/)
 
 .cache
