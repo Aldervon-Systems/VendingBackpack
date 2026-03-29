@@ -151,6 +151,7 @@ export function RoutesScreen() {
   }, [selectedId, visibleLocations]);
 
   const selectedLocation = visibleLocations.find((location) => location.id === selectedId) ?? null;
+  const selectableEmployees = employees.filter((employee) => employee.id !== "none" && employee.id !== "all");
 
   async function autogenerateRoutes() {
     setIsLoading(true);
@@ -205,12 +206,16 @@ export function RoutesScreen() {
                   </option>
                 ))}
               </select>
+              <div className="routes-filter-pod__status">{visibleLocations.length} NODES</div>
               <button className="routes-filter-pod__sparkle" type="button" aria-label="Autogenerate routes" onClick={() => void autogenerateRoutes()}>
                 <Sparkles size={16} />
               </button>
             </>
           ) : (
-            <div className="routes-filter-pod__meta">MY ROUTE</div>
+            <>
+              <div className="routes-filter-pod__meta">MY ROUTE</div>
+              <div className="routes-filter-pod__status">{visibleLocations.length} STOPS</div>
+            </>
           )}
         </ParityCard>
 
@@ -218,13 +223,26 @@ export function RoutesScreen() {
           <div className="routes-sheet">
             <div className="routes-sheet__eyebrow">ASSIGNMENT / NODE {selectedLocation.id}</div>
             <div className="routes-sheet__title">SELECT OPERATIVE FOR {selectedLocation.name.toUpperCase()}</div>
+            <div className="routes-sheet__meta">
+              <div className="routes-sheet__meta-item">
+                <span>Zone</span>
+                <strong>{selectedLocation.zone}</strong>
+              </div>
+              <div className="routes-sheet__meta-item">
+                <span>Window</span>
+                <strong>{selectedLocation.serviceWindow}</strong>
+              </div>
+              <div className="routes-sheet__meta-item">
+                <span>Assigned</span>
+                <strong>{selectedLocation.assignedTo}</strong>
+              </div>
+            </div>
             <div className="routes-sheet__list">
-              {employees
-                .filter((employee) => employee.id !== "none" && employee.id !== "all")
-                .map((employee) => (
+              {selectableEmployees.map((employee) => (
                 <button
                   key={employee.id}
                   className="routes-sheet__row"
+                  data-active={employee.name === selectedLocation.assignedTo}
                   type="button"
                   onClick={() => {
                     void assignMachine(selectedLocation.id, employee.id);
@@ -241,14 +259,18 @@ export function RoutesScreen() {
             <div className="routes-sheet__eyebrow">ASSIGNED ROUTE</div>
             <div className="routes-sheet__title">TODAY&apos;S ACTIVE NODES</div>
             <div className="routes-sheet__list">
-              {visibleLocations.map((location) => (
-                <div key={location.id} className="routes-sheet__row routes-sheet__row--static">
-                  <span>
-                    {location.id} / {location.name}
-                  </span>
-                  <strong>{location.serviceWindow}</strong>
-                </div>
-              ))}
+              {visibleLocations.length ? (
+                visibleLocations.map((location) => (
+                  <div key={location.id} className="routes-sheet__row routes-sheet__row--static">
+                    <span>
+                      {location.id} / {location.name}
+                    </span>
+                    <strong>{location.serviceWindow}</strong>
+                  </div>
+                ))
+              ) : (
+                <div className="routes-sheet__empty">No stops are currently assigned to this session.</div>
+              )}
             </div>
             <div className="routes-sheet__footer-copy">Manager assignment controls stay hidden while employee context is active.</div>
           </div>

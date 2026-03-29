@@ -1,0 +1,31 @@
+name: Security Audits
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-audits
+  cancel-in-progress: false
+
+jobs:
+  bootstrap-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify audit contracts
+        run: |
+          test -f .codex/security-audits/README.md
+          test -f .codex/security-audits/constraints.md
+          test -f .codex/security-audits/audit-rubric.md
+          test -f .codex/security-audits/audit-prompt.md
+          test -f .codex/security-audits/state/README.md
+
+      - name: Bootstrap audit workspace
+        run: bash scripts/security-audit-runner.sh "$GITHUB_WORKSPACE"

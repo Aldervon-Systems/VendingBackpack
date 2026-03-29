@@ -4,6 +4,7 @@ export const APP_ROUTES = {
   overview: "/overview",
   organizations: "/organizations",
   access: "/access",
+  machineConfig: "/machine-config",
   fleet: "/fleet",
   incidents: "/incidents",
   broadcasts: "/broadcasts",

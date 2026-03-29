@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, type FocusEvent } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, Settings, UserRound, Zap } from "lucide-react";
@@ -14,6 +15,7 @@ const pageTitles: Record<string, string> = {
   "/overview": "Overview",
   "/organizations": "Organizations",
   "/access": "Access",
+  "/machine-config": "Machine Config",
   "/fleet": "Fleet",
   "/incidents": "Incidents",
   "/broadcasts": "Broadcasts",
@@ -22,16 +24,31 @@ const pageTitles: Record<string, string> = {
 export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
   const router = useRouter();
+  const [railExpanded, setRailExpanded] = useState(false);
   const { session, logout } = useAuth();
   const { settingsOpen, setSettingsOpen } = useShell();
   const navItems = getNavItems();
   const normalizedPath = pathname.endsWith("/") && pathname !== "/" ? pathname.slice(0, -1) : pathname;
   const pageTitle = pageTitles[normalizedPath] ?? "Admin Workspace";
 
+  function handleRailBlur(event: FocusEvent<HTMLElement>) {
+    const nextFocusTarget = event.relatedTarget;
+
+    if (!(nextFocusTarget instanceof Node) || !event.currentTarget.contains(nextFocusTarget)) {
+      setRailExpanded(false);
+    }
+  }
+
   return (
     <div className="shell-page">
-      <div className="app-shell">
-        <aside className="app-rail">
+      <div className="app-shell" data-rail-expanded={railExpanded}>
+        <aside
+          className="app-rail"
+          onMouseEnter={() => setRailExpanded(true)}
+          onMouseLeave={() => setRailExpanded(false)}
+          onFocusCapture={() => setRailExpanded(true)}
+          onBlurCapture={handleRailBlur}
+        >
           <div className="app-rail__logo">
             <div className="app-rail__mark">
               <Zap size={18} strokeWidth={2.5} />
@@ -69,17 +86,17 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
 
         <main className="app-main">
           <header className="app-header">
-          <div className="app-header__title">{pageTitle}</div>
+            <div className="app-header__title">{pageTitle}</div>
 
-          <div className="app-header__user">
-            <div className="app-header__meta">
-              <div className="app-header__name">{session?.user.name}</div>
-              <div className="app-header__subtext">{session?.user.clearance}</div>
+            <div className="app-header__user">
+              <div className="app-header__meta">
+                <div className="app-header__name">{session?.user.name}</div>
+                <div className="app-header__subtext">{session?.user.clearance}</div>
+              </div>
+              <div className="app-header__avatar">
+                <UserRound size={16} />
+              </div>
             </div>
-            <div className="app-header__avatar">
-              <UserRound size={16} />
-            </div>
-          </div>
           </header>
 
           <div className="app-content">{children}</div>

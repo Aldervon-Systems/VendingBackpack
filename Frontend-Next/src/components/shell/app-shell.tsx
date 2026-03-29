@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, type FocusEvent } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, Settings, UserRound, Zap } from "lucide-react";
@@ -22,6 +23,7 @@ const pageTitles: Record<string, string> = {
 export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
   const router = useRouter();
+  const [railExpanded, setRailExpanded] = useState(false);
   const { session, effectiveRole, actualRole, logout } = useAuth();
   const {
     settingsOpen,
@@ -34,10 +36,24 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
   const normalizedPath = pathname.endsWith("/") && pathname !== "/" ? pathname.slice(0, -1) : pathname;
   const pageTitle = pageTitles[normalizedPath] ?? "Workspace";
 
+  function handleRailBlur(event: FocusEvent<HTMLElement>) {
+    const nextFocusTarget = event.relatedTarget;
+
+    if (!(nextFocusTarget instanceof Node) || !event.currentTarget.contains(nextFocusTarget)) {
+      setRailExpanded(false);
+    }
+  }
+
   return (
     <div className="shell-page">
-      <div className="app-shell">
-        <aside className="app-rail">
+      <div className="app-shell" data-rail-expanded={railExpanded}>
+        <aside
+          className="app-rail"
+          onMouseEnter={() => setRailExpanded(true)}
+          onMouseLeave={() => setRailExpanded(false)}
+          onFocusCapture={() => setRailExpanded(true)}
+          onBlurCapture={handleRailBlur}
+        >
           <div className="app-rail__logo">
             <div className="app-rail__mark">
               <Zap size={18} strokeWidth={2.5} />
@@ -45,31 +61,33 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
             <span className="app-rail__wordmark">LAB v3.0</span>
           </div>
 
-          <nav className="app-nav">
-            {navItems.map(({ href, icon: Icon, label }) => (
-              <Link key={href} href={href} className="app-nav__item" data-active={normalizedPath === href}>
-                <Icon size={20} />
-                <span className="app-nav__label">{label}</span>
-              </Link>
-            ))}
-          </nav>
+          <div className="app-rail__body">
+            <nav className="app-nav">
+              {navItems.map(({ href, icon: Icon, label }) => (
+                <Link key={href} href={href} className="app-nav__item" data-active={normalizedPath === href}>
+                  <Icon size={20} />
+                  <span className="app-nav__label">{label}</span>
+                </Link>
+              ))}
+            </nav>
 
-          <div className="app-rail__footer">
-            <button className="app-nav__item" type="button" onClick={() => setSettingsOpen(true)}>
-              <Settings size={20} />
-              <span className="app-nav__label">Settings</span>
-            </button>
-            <button
-              className="app-nav__item"
-              type="button"
-              onClick={async () => {
-                await logout();
-                router.replace(APP_ROUTES.login);
-              }}
-            >
-              <LogOut size={20} />
-              <span className="app-nav__label">Sign Out</span>
-            </button>
+            <div className="app-rail__footer">
+              <button className="app-nav__item" type="button" onClick={() => setSettingsOpen(true)}>
+                <Settings size={20} />
+                <span className="app-nav__label">Settings</span>
+              </button>
+              <button
+                className="app-nav__item"
+                type="button"
+                onClick={async () => {
+                  await logout();
+                  router.replace(APP_ROUTES.login);
+                }}
+              >
+                <LogOut size={20} />
+                <span className="app-nav__label">Sign Out</span>
+              </button>
+            </div>
           </div>
         </aside>
 
