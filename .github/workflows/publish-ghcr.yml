@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - staging
     tags:
       - 'v*'
 
@@ -60,3 +61,13 @@ jobs:
           push: true
           tags: ${{ id.meta.outputs.tags }}
           labels: ${{ id.meta.outputs.labels }}
+
+  deploy-staging:
+    name: Auto-Deploy to Staging Stack
+    needs: build-and-push
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Portainer Webhook
+        run: |
+          curl -X POST ${{ secrets.PORTAINER_STACK_WEBHOOK }}
