@@ -10,19 +10,19 @@ The API is scoped under `/api`.
 - Primary operational client: `Frontend-Next`
 - External contract naming: `camelCase`
 - Standard error envelope: `{ "detail": "..." }`
-- Local seeded preview auth: enabled only when `ALLOW_SEED_AUTH=true`
+- Local seeded preview auth: standard SQL-backed users created by `db:seed`
 
 ## Local Seeded Stack
 
 ```bash
-ALLOW_SEED_AUTH=true SEED_DEMO_DATA=true FRONTEND_AUTH_MODE=seed docker compose up -d --build backend frontend
+SEED_DEMO_DATA=true docker compose up -d --build backend frontend
 ```
 
 Seeded preview accounts:
 - Manager: `renee@aldervon.com`
 - Employee: `amanda.jones@example.com`
 - Organization search: `Aldervon Systems`
-- Password: any value in seed mode
+- Password: `password123`
 
 ## Authentication
 
@@ -43,12 +43,6 @@ Request body:
 
 ### Session Identity
 `GET /api/me`
-
-### Local Seeded Preview Tokens
-When `ALLOW_SEED_AUTH=true`, the backend also accepts seeded bearer tokens for local validation:
-- `seed:session:mgr-01`
-- `seed:session:emp-07`
-- `seed:session:emp-11`
 
 ## Contract Rules
 - Use `quantity`, never `qty`

@@ -1,3 +1,50 @@
+organization_id = "org_aldervon"
+seed_totp = ENV.fetch("SEED_ADMIN_TOTP_SEED", "JBSWY3DPEHPK3PXP")
+seed_admin_password = ENV.fetch("SEED_ADMIN_PASSWORD", "admin")
+seed_user_password = ENV.fetch("SEED_USER_PASSWORD", "password123")
+
+puts "Seeding organizations..."
+organization = Organization.find_or_initialize_by(id: organization_id)
+organization.name = "Aldervon Systems"
+organization.totp_seed = seed_totp
+organization.admin_password = seed_admin_password
+organization.admin_password_confirmation = seed_admin_password
+organization.save!
+
+puts "Seeding runtime users..."
+seed_users = [
+  { id: "user_admin", name: "Admin Manager", email: "admin@vbp.com", role: "manager" },
+  { id: "renee_goodman", name: "Renee Goodman", email: "renee@aldervon.com", role: "manager" },
+  { id: "emp-07", name: "Amanda Jones", email: "amanda.jones@example.com", role: "employee" }
+]
+
+seed_users.each do |data|
+  user = User.find_or_initialize_by(id: data[:id])
+  user.name = data[:name]
+  user.email = data[:email]
+  user.role = data[:role]
+  user.organization = organization
+  user.password = seed_user_password
+  user.password_confirmation = seed_user_password
+  user.save!
+end
+
+organization.update!(manager: User.find("renee_goodman"))
+
+puts "Seeding organization whitelist..."
+seed_whitelist = [
+  "employee@aldervon.com",
+  "manager@aldervon.com",
+  "admin@aldervon.com",
+  "renee@aldervon.com",
+  "amanda.jones@example.com"
+]
+
+organization.organization_whitelist_entries.delete_all
+seed_whitelist.each do |email|
+  organization.organization_whitelist_entries.create!(email: email)
+end
+
 employees = [
   { id: "emp-07", name: "Amanda Jones", color: 0xFF4A90E2, department: "Operations", location: "Downtown Hub", floor: "2", building: "North Tower", is_active: true },
   { id: "emp-11", name: "Luis Vega", color: 0xFF50E3C2, department: "Operations", location: "Cambridge Node", floor: "1", building: "West Annex", is_active: true },

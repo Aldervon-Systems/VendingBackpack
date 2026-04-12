@@ -1,9 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { MockAuthRepository } from "@/lib/api/mock/mock-auth-repository";
 import { ApiAuthRepository } from "@/lib/api/repositories/api-auth-repository";
-import { getBuildAuthMode } from "@/lib/build-mode";
 import type {
   AddMachinePayload,
   AuthCredentials,
@@ -35,7 +33,7 @@ type AuthContextValue = {
   addMachine: (payload: AddMachinePayload) => Promise<void>;
 };
 
-const authRepository = getBuildAuthMode() === "seed" ? new MockAuthRepository() : new ApiAuthRepository();
+const authRepository = new ApiAuthRepository();
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: Readonly<{ children: React.ReactNode }>) {

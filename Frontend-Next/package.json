@@ -6,7 +6,6 @@
     "dev": "node scripts/dev-with-proxy.mjs",
     "dev:next": "next dev",
     "build": "node scripts/build-with-mode.mjs",
-    "build:seed": "node scripts/build-with-mode.mjs -seed",
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest"

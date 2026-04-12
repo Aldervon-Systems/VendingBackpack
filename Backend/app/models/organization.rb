@@ -1,0 +1,12 @@
+class Organization < ApplicationRecord
+  self.primary_key = :id
+
+  has_secure_password :admin_password
+
+  has_many :users, dependent: :nullify
+  has_many :organization_whitelist_entries, dependent: :destroy
+  belongs_to :manager, class_name: "User", optional: true
+
+  validates :name, presence: true, uniqueness: true
+  validates :totp_seed, presence: true
+end

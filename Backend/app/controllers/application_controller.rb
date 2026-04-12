@@ -41,12 +41,8 @@ class ApplicationController < ActionController::API
 
     token = bearer_token
     payload = decode_access_token(token)
-    @current_user =
-      if payload
-        Fixtures::MockApi.new.find_user_by_id(payload["sub"])
-      else
-        SeedAuth.find_user_by_token(token)
-      end
+    user = payload ? User.includes(:organization).find_by(id: payload["sub"].to_s) : nil
+    @current_user = user&.auth_payload
   end
 
   def bearer_token
