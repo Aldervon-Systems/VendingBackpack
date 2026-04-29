@@ -19,11 +19,11 @@ class _DashboardHomeState extends State<DashboardHome> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final metrics = context.read<BusinessMetrics>();
-      metrics.loadData();
       final session = context.read<SessionManager>();
-      if (!session.isManager && session.currentUser != null) {
-        metrics.fetchUserRoute(session.currentUser!.id);
-      }
+      metrics.loadData(
+        role: session.effectiveRole,
+        userId: session.currentUser?.id,
+      );
     });
   }
 
@@ -37,9 +37,12 @@ class _DashboardHomeState extends State<DashboardHome> {
       return const Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.border));
     }
 
-    final machineIdsToDisplay = isManager 
-        ? metrics.inventory.keys.toList() 
-        : metrics.inventory.keys.where((id) => metrics.userMachineIds.contains(id)).toList();
+    final machineIdsToDisplay = isManager
+        ? metrics.inventory.map((snapshot) => snapshot.machineId).toList()
+        : metrics.inventory
+            .where((snapshot) => metrics.userMachineIds.contains(snapshot.machineId))
+            .map((snapshot) => snapshot.machineId)
+            .toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -66,10 +69,14 @@ class _DashboardHomeState extends State<DashboardHome> {
               child: Text('NO NODES ASSIGNED', style: AppStyle.label()),
             )),
           ...machineIdsToDisplay.map((mid) {
-            final items = metrics.inventory[mid] ?? [];
+            final matchingSnapshots = metrics.inventory
+                .where((snapshot) => snapshot.machineId == mid)
+                .toList();
+            final snapshot = matchingSnapshots.isNotEmpty ? matchingSnapshots.first : null;
+            final items = snapshot?.items ?? [];
             return MachineStopCard(
               machineId: mid,
-              machineName: 'UNIT $mid',
+              machineName: snapshot?.machineName ?? 'UNIT $mid',
               items: items,
               isOnline: true,
               onUpdateQuantity: (sku, newQty) {

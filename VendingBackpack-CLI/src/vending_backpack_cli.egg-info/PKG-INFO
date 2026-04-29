@@ -1,0 +1,6 @@
+Metadata-Version: 2.4
+Name: vending-backpack-cli
+Version: 0.1.0
+Summary: Terminal client for the VendingBackpack Rails API.
+Requires-Python: >=3.9
+Requires-Dist: requests>=2.31.0

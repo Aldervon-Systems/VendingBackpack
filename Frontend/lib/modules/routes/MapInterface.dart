@@ -42,10 +42,10 @@ class MapInterface extends StatelessWidget {
                           border: Border.all(color: AppColors.border),
                         ),
                         child: ListTile(
-                          title: Text(emp['name'], style: AppStyle.label(fontWeight: FontWeight.bold, color: AppColors.dataPrimary)),
+                          title: Text(emp.name, style: AppStyle.label(fontWeight: FontWeight.bold, color: AppColors.dataPrimary)),
                           trailing: const Icon(Icons.chevron_right, size: 16),
                           onTap: () {
-                            planner.assignMachineToEmployee(machineId, emp['id']);
+                            planner.assignMachineToEmployee(machineId, emp.id);
                             Navigator.pop(ctx);
                           },
                         ),
@@ -64,7 +64,6 @@ class MapInterface extends StatelessWidget {
   Widget build(BuildContext context) {
     final session = Provider.of<SessionManager>(context);
     final isManager = session.isManager && session.effectiveRole == 'manager';
-    final restrictedId = isManager ? null : session.currentUser?.id.toString();
 
     return Consumer<RoutePlanner>(
       builder: (context, planner, child) {
@@ -74,16 +73,17 @@ class MapInterface extends StatelessWidget {
         
         final center = planner.locations.isNotEmpty
             ? LatLng(
-                (planner.locations.first['lat'] as num).toDouble(),
-                (planner.locations.first['lng'] as num).toDouble(),
+                planner.locations.first.lat ?? 42.3550,
+                planner.locations.first.lng ?? -71.0656,
               )
             : const LatLng(42.3550, -71.0656);
 
-        final visibleLocations = isManager 
-           ? planner.locations 
-           : (planner.locations as List).where((loc) {
-               return planner.activeRouteStops.any((stop) => stop['id'] == loc['id']);
-             }).toList();
+        final visibleLocations = isManager
+            ? planner.locations
+            : planner.locations.where((loc) {
+                return planner.activeRouteStops
+                    .any((stop) => stop.machineId == loc.id);
+              }).toList();
 
         return Stack(
           children: [
@@ -114,13 +114,14 @@ class MapInterface extends StatelessWidget {
                 ),
                 MarkerLayer(
                   markers: visibleLocations.map((loc) {
-                    final lat = (loc['lat'] as num).toDouble();
-                    final lng = (loc['lng'] as num).toDouble();
+                    final lat = loc.lat;
+                    final lng = loc.lng;
+                    if (lat == null || lng == null) return null;
                     return Marker(
                       point: LatLng(lat, lng),
                       width: 40, height: 40,
                       child: GestureDetector(
-                        onTap: isManager ? () => _showAssignmentModal(context, planner, loc['id'].toString(), loc['name']) : null,
+                        onTap: isManager ? () => _showAssignmentModal(context, planner, loc.id, loc.name) : null,
                         child: Container(
                           decoration: BoxDecoration(
                             color: AppColors.surface,
@@ -132,7 +133,7 @@ class MapInterface extends StatelessWidget {
                         ),
                       ),
                     );
-                  }).toList(),
+                  }).whereType<Marker>().toList(),
                 ),
               ],
             ),
@@ -154,8 +155,8 @@ class MapInterface extends StatelessWidget {
                           const DropdownMenuItem(value: null, child: Text('NONE')),
                           const DropdownMenuItem(value: 'all', child: Text('ALL NODES')),
                           ...planner.employees.map((e) => DropdownMenuItem(
-                            value: e['id'].toString(),
-                            child: Text(e['name'].toUpperCase()),
+                            value: e.id,
+                            child: Text(e.name.toUpperCase()),
                           )),
                         ],
                       ),

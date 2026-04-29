@@ -1,33 +1,28 @@
 import 'package:flutter/foundation.dart';
-import '../../core/services/ApiClient.dart';
-import 'InventoryItem.dart';
-import 'Shipment.dart';
+import '../../core/contracts/operations.dart';
+import '../../core/repositories/warehouse_repository.dart';
 
 class InventoryController extends ChangeNotifier {
-  final ApiClient _api = ApiClient();
-  List<InventoryItem> _inventory = [];
-  List<Shipment> _shipments = [];
+  final WarehouseRepository _repository = WarehouseRepository();
+  List<WarehouseInventoryRowDto> _inventory = [];
+  List<ShipmentDto> _shipments = [];
   bool _isLoading = false;
+  String? _error;
 
-  List<InventoryItem> get inventory => _inventory;
-  List<Shipment> get shipments => _shipments;
+  List<WarehouseInventoryRowDto> get inventory => _inventory;
+  List<ShipmentDto> get shipments => _shipments;
   bool get isLoading => _isLoading;
+  String? get error => _error;
 
   Future<void> loadInventory() async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
     try {
-      final data = await _api.get('/warehouse');
-      if (data is List) {
-        _inventory = data.map((e) => InventoryItem.fromJson(e)).toList();
-      }
-      
-      final shipmentData = await _api.get('/warehouse/shipments');
-      if (shipmentData is List) {
-        _shipments = shipmentData.map((e) => Shipment.fromJson(e)).toList();
-      }
+      _inventory = await _repository.getWarehouse();
+      _shipments = await _repository.getShipments();
     } catch (e) {
-      debugPrint('Error loading inventory: $e');
+      _error = e.toString().replaceFirst('Exception: ', '');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -36,10 +31,8 @@ class InventoryController extends ChangeNotifier {
 
   Future<Map<String, dynamic>?> checkBarcode(String barcode) async {
     try {
-      final data = await _api.get('/items/$barcode');
-      if (data != null && data['sku'] != null) {
-        return Map<String, dynamic>.from(data);
-      }
+      final item = await _repository.lookupBarcode(barcode.trim());
+      if (item.sku.isNotEmpty) return {'sku': item.sku, 'name': item.name};
     } catch (e) {
       debugPrint('Error checking barcode: $e');
     }
@@ -48,11 +41,7 @@ class InventoryController extends ChangeNotifier {
 
   Future<void> addBarcodeStock(String barcode, String name, int qty) async {
     try {
-      await _api.post('/warehouse/add_stock', {
-        'barcode': barcode,
-        'name': name,
-        'quantity': qty,
-      });
+      await _repository.addStock(barcode: barcode, name: name, quantity: qty);
       await loadInventory();
     } catch (e) {
       debugPrint('Error adding barcode stock: $e');
@@ -62,12 +51,11 @@ class InventoryController extends ChangeNotifier {
 
   Future<void> addShipment(String description, int amount, DateTime date) async {
     try {
-      await _api.post('/warehouse/shipments', {
-        'description': description,
-        'amount': amount,
-        'date': date.toIso8601String(),
-        'status': 'scheduled',
-      });
+      await _repository.scheduleShipment(
+        description: description,
+        amount: amount,
+        scheduledFor: date,
+      );
       await loadInventory();
     } catch (e) {
       debugPrint('Error adding shipment: $e');

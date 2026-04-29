@@ -1,55 +1,54 @@
 import 'package:flutter/foundation.dart';
+import 'dart:ui';
 import '../../core/models/Employee.dart';
-import '../../core/services/ApiClient.dart';
+import '../../core/contracts/operations.dart';
+import '../../core/repositories/dashboard_repository.dart';
 
 class BusinessMetrics extends ChangeNotifier {
-  final ApiClient _api = ApiClient();
+  final DashboardRepository _repository = DashboardRepository();
   bool _isLoading = false;
   List<Employee> _employees = [];
-  Map<String, List<dynamic>> _inventory = {};
-  List<dynamic> _dailyStats = [];
+  List<MachineInventorySnapshotDto> _inventory = [];
+  List<MachineDto> _machines = [];
+  List<RouteDto> _routes = [];
+  List<DailyStatDto> _dailyStats = [];
+  List<String> _failedFeeds = [];
   double _revenueToday = 0.0;
 
   bool get isLoading => _isLoading;
   List<Employee> get employees => _employees;
-  Map<String, List<dynamic>> get inventory => _inventory;
+  List<MachineInventorySnapshotDto> get inventory => _inventory;
+  List<MachineDto> get machines => _machines;
+  List<RouteDto> get routes => _routes;
+  List<String> get failedFeeds => _failedFeeds;
   double get revenueToday => _revenueToday;
-  int get totalMachines => _inventory.keys.length;
-  // Mock logic: assume all machines with inventory are online for now
-  int get onlineMachines => _inventory.keys.length;
+  int get totalMachines => _machines.isNotEmpty ? _machines.length : _inventory.length;
+  int get onlineMachines => _machines.where((machine) => machine.status != 'attention').length;
 
-  Future<void> loadData() async {
+  Future<void> loadData({String role = 'employee', String? userId}) async {
     _isLoading = true;
     notifyListeners();
     try {
-      final inv = await _api.get('/inventory');
-      if (inv is Map) {
-        _inventory = Map<String, List<dynamic>>.from(inv);
-      }
-    } catch (e) {
-      debugPrint('Error loading inventory: $e');
-    }
-
-    try {
-      final emps = await _api.get('/employees');
-      if (emps is List) {
-        _employees = emps.map((e) => Employee.fromJson(e)).toList();
-      }
-    } catch (e) {
-      debugPrint('Error loading employees: $e');
-    }
-
-    try {
-      final stats = await _api.get('/daily_stats');
-      if (stats is List) {
-        _dailyStats = stats;
-        // Simple mock calc: just sum up everything for "today" or take the last entry
-        if (_dailyStats.isNotEmpty) {
-          _revenueToday = (_dailyStats.last['amount'] as num).toDouble();
-        }
-      }
-    } catch (e) {
-      debugPrint('Error loading daily stats: $e');
+      final snapshot = await _repository.getSnapshot(role: role, userId: userId);
+      _inventory = snapshot.inventory;
+      _employees = snapshot.employees
+          .map(
+            (employee) => Employee(
+              id: employee.id,
+              name: employee.name,
+              color: Color(employee.color ?? 0xFF4A5568),
+            ),
+          )
+          .toList();
+      _dailyStats = snapshot.dailyStats;
+      _machines = snapshot.machines;
+      _routes = snapshot.routes;
+      _userMachineIds = snapshot.userRoute?.stops
+              .map((stop) => stop.machineId)
+              .toList() ??
+          [];
+      _failedFeeds = snapshot.failedFeeds;
+      _revenueToday = _dailyStats.isNotEmpty ? _dailyStats.last.amount : 0.0;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -61,17 +60,15 @@ class BusinessMetrics extends ChangeNotifier {
   List<String> get userMachineIds => _userMachineIds;
 
   Future<void> fetchUserRoute(String userId) async {
-    try {
-      final routeData = await _api.get('/employees/$userId/routes');
-      if (routeData is Map && routeData['stops'] is List) {
-        _userMachineIds = (routeData['stops'] as List)
-            .map((s) => s['id'].toString())
-            .toList();
-        notifyListeners();
+    RouteDto? route;
+    for (final candidate in _routes) {
+      if (candidate.employeeId == userId) {
+        route = candidate;
+        break;
       }
-    } catch (e) {
-      debugPrint('Error fetching user route: $e');
     }
+    _userMachineIds = route?.stops.map((stop) => stop.machineId).toList() ?? [];
+    notifyListeners();
   }
 
   Future<void> updateItemQuantity(
@@ -80,11 +77,11 @@ class BusinessMetrics extends ChangeNotifier {
     int newQty,
   ) async {
     try {
-      await _api.post('/warehouse/update', {
-        'machine_id': machineId,
-        'sku': sku,
-        'quantity': newQty,
-      });
+      await _repository.updateItemQuantity(
+        machineId: machineId,
+        sku: sku,
+        quantity: newQty,
+      );
       await loadData();
     } catch (e) {
       debugPrint('Error updating item qty: $e');

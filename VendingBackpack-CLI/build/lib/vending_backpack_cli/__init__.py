@@ -1,0 +1,2 @@
+"""VendingBackpack CLI package."""
+

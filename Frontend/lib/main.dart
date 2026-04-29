@@ -7,6 +7,7 @@ import 'modules/auth/AccessScreens.dart';
 import 'modules/layout/PagesLayout.dart';
 import 'modules/dashboard/BusinessMetrics.dart';
 import 'core/styles/AppStyle.dart';
+import 'core/services/SurfaceControl.dart';
 
 void main() {
   runApp(const MyApp());
@@ -67,14 +68,53 @@ class MyApp extends StatelessWidget {
             space: 1,
           ),
         ),
-        home: const AuthWrapper(),
+        home: const SurfaceAwareHome(),
       ),
     );
   }
 }
 
+class SurfaceAwareHome extends StatefulWidget {
+  const SurfaceAwareHome({super.key});
+
+  @override
+  State<SurfaceAwareHome> createState() => _SurfaceAwareHomeState();
+}
+
+class _SurfaceAwareHomeState extends State<SurfaceAwareHome> {
+  late final Future<SurfaceLaunchTarget?> _targetFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _targetFuture = SurfaceControlService.claimTarget();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<SurfaceLaunchTarget?>(
+      future: _targetFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.border,
+              ),
+            ),
+          );
+        }
+        return AuthWrapper(initialTarget: snapshot.data);
+      },
+    );
+  }
+}
+
 class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
+  const AuthWrapper({super.key, this.initialTarget});
+
+  final SurfaceLaunchTarget? initialTarget;
 
   @override
   Widget build(BuildContext context) {
@@ -90,8 +130,8 @@ class AuthWrapper extends StatelessWidget {
       );
     }
     if (session.isAuthenticated) {
-      return const PagesLayout();
+      return PagesLayout(initialTarget: initialTarget);
     }
-    return const AccessScreens();
+    return AccessScreens(initialTarget: initialTarget);
   }
 }

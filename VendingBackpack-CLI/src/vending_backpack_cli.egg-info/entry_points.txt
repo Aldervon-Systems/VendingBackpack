@@ -1,0 +1,2 @@
+[console_scripts]
+vbp = vending_backpack_cli.cli:main

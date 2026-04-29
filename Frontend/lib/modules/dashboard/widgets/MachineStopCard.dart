@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../../core/contracts/operations.dart';
 import '../../../core/styles/AppStyle.dart';
 
 class MachineStopCard extends StatelessWidget {
   final String machineId;
   final String machineName;
   final bool isOnline;
-  final List<dynamic> items;
+  final List<MachineInventoryItemDto> items;
   final Function(String sku, int newQty)? onUpdateQuantity;
 
   const MachineStopCard({
@@ -47,10 +48,10 @@ class MachineStopCard extends StatelessWidget {
                   ),
                 for (final item in items)
                   _ItemRow(
-                    name: item['name'] ?? 'Unknown Item',
-                    sku: item['sku'],
-                    qty: (item['qty'] as num).toInt(),
-                    onUpdate: (newQty) => onUpdateQuantity?.call(item['sku'], newQty),
+                    name: item.name.isNotEmpty ? item.name : 'Unknown Item',
+                    sku: item.sku,
+                    qty: item.quantity,
+                    onUpdate: (newQty) => onUpdateQuantity?.call(item.sku, newQty),
                   ),
               ],
             ),
