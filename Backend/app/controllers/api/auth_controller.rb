@@ -2,9 +2,10 @@
 
 module Api
   class AuthController < ApplicationController
-    before_action :require_auth!, only: %i[me update_whitelist add_machine]
+    before_action :require_auth!, only: %i[me create_organization verify_admin update_whitelist add_machine]
+    before_action :require_platform_admin!, only: %i[create_organization]
     before_action :require_manager!, only: %i[update_whitelist add_machine]
-    before_action only: %i[update_whitelist add_machine] do
+    before_action only: %i[verify_admin update_whitelist add_machine] do
       require_org_match!(params[:organization_id])
     end
 
@@ -25,7 +26,7 @@ module Api
       email = payload_value("email").to_s.downcase
       password = payload_value("password").to_s
       name = payload_value("name").to_s
-      role = payload_value("role").to_s.presence || "employee"
+      role = "employee"
       org_id = payload_value("organization_id").to_s
 
       if User.exists?(email: email)
@@ -61,6 +62,7 @@ module Api
           id: user.id,
           name: user.name.presence || user.email.split("@").first.to_s.humanize,
           color: 0xFF4A5568,
+          organization_id: org_id.presence,
           is_active: true
         )
       end
@@ -73,9 +75,9 @@ module Api
     def search_organizations
       query = params[:q].to_s
       organizations = if query.blank?
-        Organization.order(:name).limit(10)
+        Organization.none
       else
-        Organization.where("LOWER(name) LIKE ?", "%#{ActiveRecord::Base.sanitize_sql_like(query.downcase)}%").order(:name).limit(10)
+        Organization.where("LOWER(name) = ?", query.downcase.strip).order(:name).limit(1)
       end
 
       render json: organizations.map { |organization| { id: organization.id, name: organization.name } }
@@ -95,17 +97,11 @@ module Api
     end
 
     def create_organization
-      manager_email = payload_value("manager_email").to_s.downcase
-      manager_password = payload_value("manager_password").to_s
       org_name = payload_value("name").to_s
       admin_password = payload_value("admin_password").to_s
       whitelist = normalized_whitelist(payload_value("whitelist"))
-
-      manager = User.find_by(email: manager_email)
-      unless manager&.role == "manager" && manager.authenticate(manager_password)
-        render json: { detail: "Unauthorized: Manager credentials required" }, status: :unauthorized
-        return
-      end
+      manager_email = payload_value("manager_email").to_s.downcase
+      manager = manager_email.present? ? User.find_by(email: manager_email) : nil
 
       totp_seed = ROTP::Base32.random
       org_id = "org_#{SecureRandom.hex(4)}"
@@ -117,20 +113,19 @@ module Api
           admin_password: admin_password,
           admin_password_confirmation: admin_password,
           totp_seed: totp_seed,
-          manager: manager
+          manager: manager&.role == "manager" ? manager : nil
         )
 
         whitelist.each do |email|
           organization.organization_whitelist_entries.create!(email: email)
         end
 
-        manager.update!(organization: organization)
+        manager&.update!(organization: organization) if manager&.role == "manager"
       end
 
       render json: {
         organization_id: org_id,
-        totp_seed: totp_seed,
-        totp_uri: ROTP::TOTP.new(totp_seed, issuer: "VendingBackpack").provisioning_uri(manager.email)
+        totp_uri: ROTP::TOTP.new(totp_seed, issuer: "VendingBackpack").provisioning_uri(manager&.email || current_user["email"])
       }
     rescue ActiveRecord::RecordInvalid => e
       render json: { detail: e.record.errors.full_messages.to_sentence }, status: :unprocessable_entity
@@ -153,10 +148,8 @@ module Api
       if password_ok && totp_ok
         render json: { verified: true }
       else
-        reasons = []
-        reasons << "Invalid admin password" unless password_ok
-        reasons << "Invalid TOTP code" unless totp_ok
-        render json: { verified: false, detail: reasons.join(", ") }, status: :unauthorized
+        Rails.logger.warn("[admin_verification] failed organization_id=#{org_id} user_id=#{current_user&.dig('id')}")
+        render json: { verified: false, detail: "Invalid verification code or credentials" }, status: :unauthorized
       end
     end
 

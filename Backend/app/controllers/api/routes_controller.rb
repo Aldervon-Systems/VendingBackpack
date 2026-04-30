@@ -3,11 +3,11 @@
 module Api
   class RoutesController < Api::BaseController
     def routes
-      render json: Route.includes(stops: :machine).order(:employee_name, :employee_id).map(&:payload)
+      render json: current_organization.routes.includes(stops: :machine).order(:employee_name, :employee_id).map(&:payload)
     end
 
     def employees
-      render json: Employee.order(:name, :id).map(&:payload)
+      render json: current_organization.employees.order(:name, :id).map(&:payload)
     end
   end
 end

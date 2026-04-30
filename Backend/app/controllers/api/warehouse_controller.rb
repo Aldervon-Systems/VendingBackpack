@@ -5,16 +5,16 @@ module Api
     before_action :require_manager!, only: %i[add_stock add_shipment]
 
     def warehouse
-      render json: InventoryAuthority.warehouse_inventory
+      render json: InventoryAuthority.warehouse_inventory(organization: current_organization)
     end
     
     def inventory
-      render json: InventoryAuthority.machine_inventory
+      render json: InventoryAuthority.machine_inventory(organization: current_organization)
     end
 
     def item
       barcode = params[:barcode].to_s
-      item = InventoryAuthority.find_item_by_barcode(barcode)
+      item = InventoryAuthority.find_item_by_barcode(barcode, organization: current_organization)
       if item
         render json: item
       else
@@ -23,7 +23,7 @@ module Api
     end
 
     def daily_stats
-      render json: InventoryAuthority.daily_stats
+      render json: InventoryAuthority.daily_stats(organization: current_organization)
     end
 
     def update_inventory
@@ -38,7 +38,7 @@ module Api
         return
       end
 
-      InventoryAuthority.set_machine_quantity(machine_id: machine_id, sku: sku, quantity: new_qty)
+      InventoryAuthority.set_machine_quantity(machine_id: machine_id, sku: sku, quantity: new_qty, organization: current_organization)
       render json: { status: "success", machineId: machine_id, sku: sku, quantity: new_qty }
     rescue InventoryAuthority::InventoryError => e
       render json: { detail: e.message }, status: :unprocessable_entity
@@ -49,14 +49,14 @@ module Api
       name = params[:name].to_s
       qty = params[:quantity].to_i
 
-      item = InventoryAuthority.add_stock(barcode: barcode, name: name, quantity: qty)
+      item = InventoryAuthority.add_stock(barcode: barcode, name: name, quantity: qty, organization: current_organization)
       render json: item
     rescue InventoryAuthority::InventoryError => e
       render json: { detail: e.message }, status: :unprocessable_entity
     end
 
     def get_shipments
-      render json: InventoryAuthority.shipments
+      render json: InventoryAuthority.shipments(organization: current_organization)
     end
 
     def add_shipment
@@ -64,7 +64,8 @@ module Api
         description: params[:description],
         amount: params[:amount],
         scheduled_for: params[:scheduledFor] || Time.now.iso8601,
-        status: params[:status]
+        status: params[:status],
+        organization: current_organization
       )
       render json: shipment
     rescue InventoryAuthority::InventoryError => e
@@ -76,7 +77,7 @@ module Api
     def authorized_for_machine_update?(machine_id)
       return true if current_user && current_user["role"].to_s.downcase == "manager"
 
-      route = Route.find_by(employee_id: current_user&.dig("id").to_s)
+      route = current_organization.routes.find_by(employee_id: current_user&.dig("id").to_s)
       route && route.stops.exists?(machine_id: machine_id.to_s)
     end
   end

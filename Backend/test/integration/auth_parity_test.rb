@@ -68,9 +68,31 @@ class AuthParityTest < ActionDispatch::IntegrationTest
     user_id = json_response.dig("user", "id")
     assert User.exists?(id: user_id)
     assert Employee.exists?(id: user_id)
+    assert_equal "employee", json_response.dig("user", "role")
+    assert_equal organization.id, Employee.find(user_id).organization_id
+  end
+
+  test "signup ignores manager role escalation" do
+    organization = create_test_organization(id: "org_aldervon")
+    organization.organization_whitelist_entries.create!(email: "allowed@aldervon.com")
+
+    post "/api/signup",
+         params: {
+           name: "Escalation Attempt",
+           email: "allowed@aldervon.com",
+           password: "password123",
+           role: "manager",
+           organization_id: organization.id
+         }.to_json,
+         headers: { "Content-Type" => "application/json" }
+
+    assert_response :created
+    assert_equal "employee", json_response.dig("user", "role")
+    assert_equal "employee", User.find(json_response.dig("user", "id")).role
   end
 
   test "organization provisioning persists org and whitelist in sql" do
+    ensure_platform_admin!
     create_test_user(
       "id" => "provision_mgr",
       "name" => "Provision Manager",
@@ -83,11 +105,10 @@ class AuthParityTest < ActionDispatch::IntegrationTest
          params: {
            name: "Northwind Ops",
            manager_email: "provision.manager@example.com",
-           manager_password: "password123",
            admin_password: "admin-pass-123",
            whitelist: ["ops@northwind.test", "warehouse@northwind.test"]
          }.to_json,
-         headers: { "Content-Type" => "application/json" }
+         headers: platform_admin_headers
 
     assert_response :success
 
@@ -96,6 +117,22 @@ class AuthParityTest < ActionDispatch::IntegrationTest
     assert organization.authenticate_admin_password("admin-pass-123")
     assert_equal ["ops@northwind.test", "warehouse@northwind.test"], organization.organization_whitelist_entries.order(:email).pluck(:email)
     assert_equal organization.id, User.find("provision_mgr").organization_id
+    assert_nil json_response["totp_seed"]
+    assert_match(/\Aotpauth:\/\//, json_response.fetch("totp_uri"))
+  end
+
+  test "tenant manager cannot provision organizations" do
+    ensure_default_manager!
+
+    post "/api/organizations/create",
+         params: {
+           name: "Blocked Ops",
+           admin_password: "admin-pass-123",
+           whitelist: []
+         }.to_json,
+         headers: manager_headers
+
+    assert_response :forbidden
   end
 
   test "admin verification reads sql-backed admin password and totp seed" do
@@ -108,10 +145,25 @@ class AuthParityTest < ActionDispatch::IntegrationTest
            admin_password: "admin",
            totp_code: valid_code
          }.to_json,
-         headers: { "Content-Type" => "application/json" }
+         headers: manager_headers
 
     assert_response :success
     assert_equal true, json_response.fetch("verified")
+  end
+
+  test "admin verification failure is generic" do
+    organization = create_test_organization(id: "org_aldervon", admin_password: "admin")
+
+    post "/api/organizations/verify_admin",
+         params: {
+           organization_id: organization.id,
+           admin_password: "wrong",
+           totp_code: "000000"
+         }.to_json,
+         headers: manager_headers
+
+    assert_response :unauthorized
+    assert_equal "Invalid verification code or credentials", json_response.fetch("detail")
   end
 
   test "whitelist update writes sql-backed whitelist rows" do
@@ -150,6 +202,7 @@ class AuthParityTest < ActionDispatch::IntegrationTest
   end
 
   test "employee with matching sql employee can fetch own route" do
+    create_test_organization(id: "org_aldervon")
     employee = Employee.create!(id: "emp_auth", name: "Auth Employee", color: 0xFF112233, is_active: true)
     machine = Machine.create!(id: "M-600", name: "Machine 600", lat: 42.0, lng: -71.0)
     route = Route.create!(employee: employee, employee_name: employee.name, distance_meters: 0, duration_seconds: 0)

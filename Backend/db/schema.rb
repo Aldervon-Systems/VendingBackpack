@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_04_12_000005) do
+ActiveRecord::Schema[7.1].define(version: 2026_04_29_000006) do
   create_table "employees", id: :string, force: :cascade do |t|
     t.string "name"
     t.integer "color"
@@ -19,8 +19,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_12_000005) do
     t.string "floor"
     t.string "building"
     t.boolean "is_active", default: true
+    t.string "organization_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["organization_id", "id"], name: "idx_employees_org_id", unique: true
+    t.index ["organization_id"], name: "index_employees_on_organization_id"
   end
 
   create_table "items", force: :cascade do |t|
@@ -33,10 +36,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_12_000005) do
     t.boolean "is_available", default: true, null: false
     t.string "image_url"
     t.integer "warehouse_quantity", default: 0, null: false
+    t.string "organization_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["barcode"], name: "index_items_on_barcode", unique: true
-    t.index ["sku"], name: "index_items_on_sku", unique: true
+    t.index ["organization_id", "barcode"], name: "idx_items_org_barcode", unique: true
+    t.index ["organization_id", "sku"], name: "idx_items_org_sku", unique: true
+    t.index ["organization_id"], name: "index_items_on_organization_id"
   end
 
   create_table "machine_inventories", force: :cascade do |t|
@@ -60,6 +65,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_12_000005) do
     t.string "status", default: "online", null: false
     t.integer "battery", default: 100, null: false
     t.string "location"
+    t.index ["organization_id", "id"], name: "idx_machines_org_id", unique: true
+    t.index ["organization_id"], name: "index_machines_on_organization_id"
   end
 
   create_table "organization_whitelist_entries", force: :cascade do |t|
@@ -85,8 +92,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_12_000005) do
     t.string "employee_name"
     t.float "distance_meters", default: 0.0
     t.float "duration_seconds", default: 0.0
+    t.string "organization_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["organization_id", "employee_id"], name: "idx_routes_org_employee"
+    t.index ["organization_id"], name: "index_routes_on_organization_id"
   end
 
   create_table "shipments", force: :cascade do |t|
@@ -94,8 +104,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_12_000005) do
     t.integer "amount", default: 0, null: false
     t.datetime "scheduled_for", null: false
     t.string "status", default: "scheduled", null: false
+    t.string "organization_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["organization_id"], name: "index_shipments_on_organization_id"
   end
 
   create_table "stops", force: :cascade do |t|
@@ -139,10 +151,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_12_000005) do
     t.string "user_id"
     t.datetime "completed_at", null: false
     t.datetime "refunded_at"
+    t.string "organization_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["item_id"], name: "index_vending_transactions_on_item_id"
     t.index ["machine_id"], name: "index_vending_transactions_on_machine_id"
+    t.index ["organization_id"], name: "index_vending_transactions_on_organization_id"
     t.index ["status"], name: "index_vending_transactions_on_status"
   end
 
@@ -154,19 +168,28 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_12_000005) do
     t.string "machine_id"
     t.string "reason"
     t.string "reference_code"
+    t.string "organization_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["item_id"], name: "index_warehouse_movements_on_item_id"
     t.index ["machine_id"], name: "index_warehouse_movements_on_machine_id"
+    t.index ["organization_id"], name: "index_warehouse_movements_on_organization_id"
   end
 
+  add_foreign_key "employees", "organizations"
+  add_foreign_key "items", "organizations"
   add_foreign_key "machine_inventories", "items"
   add_foreign_key "machine_inventories", "machines"
+  add_foreign_key "machines", "organizations"
   add_foreign_key "organization_whitelist_entries", "organizations"
   add_foreign_key "organizations", "users", column: "manager_id"
+  add_foreign_key "routes", "organizations"
+  add_foreign_key "shipments", "organizations"
   add_foreign_key "stops", "routes"
   add_foreign_key "users", "organizations"
   add_foreign_key "vending_transactions", "items"
   add_foreign_key "vending_transactions", "machines"
+  add_foreign_key "vending_transactions", "organizations"
   add_foreign_key "warehouse_movements", "items"
+  add_foreign_key "warehouse_movements", "organizations"
 end

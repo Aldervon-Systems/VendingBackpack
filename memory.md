@@ -9,11 +9,9 @@ Monorepo for the VendingBackpack system. Current active surfaces are:
 ## #SELF REMINDERS
 
 ### Main Goals
-- Keep the Dart/Flutter client pointed at `https://app.aldervon.com/api` by default, with `API_BASE_URL` kept for local Rails overrides.
-- Keep Flutter data contracts aligned to the Rails/Next route shapes through DTOs and repository layers.
-- Keep the Python CLI as a sibling terminal surface; only bridge into Flutter through explicit surface-control flags.
-- Treat the live database as Rails-owned; Flutter and CLI should connect through public/local Rails API endpoints, not directly to DB credentials.
-- When launching Flutter for the user, report whether the macOS app process is actually running even if foregrounding fails.
+- Keep public Flutter/CLI traffic behind Rails API security, not direct database access.
+- Preserve additive, non-destructive tenant migrations: backfill blank organization ownership only when unambiguous.
+- Keep backend hardening focused on role escalation, tenant scoping, platform-admin org creation, generic admin verification, restricted CORS, and local token-file permissions.
 
 ### Next Sub-Goal
-- Use the running macOS app to manually verify manager and employee login against the public Rails endpoint.
+- Validate the backend hardening with Ruby 3.3.10/Bundler 4.0.3 or a running Docker daemon, then run the Rails security tests and migrations.

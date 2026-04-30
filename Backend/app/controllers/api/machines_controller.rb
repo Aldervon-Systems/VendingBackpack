@@ -7,7 +7,7 @@ module Api
     end
 
     def show
-      machine = Machine.find_by(id: params[:id].to_s)
+      machine = current_organization.machines.find_by(id: params[:id].to_s)
       if machine
         render json: machine.payload
       else
@@ -18,7 +18,7 @@ module Api
     private
 
     def machines
-      Machine.order(:name, :id)
+      current_organization.machines.order(:name, :id)
     end
   end
 end

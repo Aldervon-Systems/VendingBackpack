@@ -1,7 +1,7 @@
 class User < ApplicationRecord
   self.primary_key = :id
 
-  ROLES = %w[manager employee].freeze
+  ROLES = %w[platform_admin manager employee].freeze
 
   has_secure_password
 

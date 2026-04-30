@@ -42,11 +42,26 @@ class ActiveSupport::TestCase
   setup do
     next unless ActiveRecord::Base.connected?
 
-    [OrganizationWhitelistEntry, User, Organization].each do |model|
+    [
+      VendingTransaction,
+      WarehouseMovement,
+      MachineInventory,
+      Shipment,
+      Stop,
+      Route,
+      Machine,
+      Item,
+      Employee,
+      OrganizationWhitelistEntry,
+      User,
+      Organization
+    ].each do |model|
       next unless model.table_exists?
 
       model.delete_all
     end
+
+    create_test_organization(id: "org_aldervon") if Organization.table_exists?
   end
 end
 
@@ -63,6 +78,11 @@ class ActionDispatch::IntegrationTest
   def manager_headers
     ensure_default_manager!
     auth_headers(user_id: "user_admin", role: "manager", organization_id: "org_aldervon")
+  end
+
+  def platform_admin_headers
+    ensure_platform_admin!
+    auth_headers(user_id: "platform_admin", role: "platform_admin", organization_id: nil)
   end
 
   def employee_headers(user_id:, organization_id: "org_aldervon")
@@ -97,6 +117,16 @@ class ActionDispatch::IntegrationTest
       "password" => "password123",
       "role" => "manager",
       "organization_id" => "org_aldervon"
+    )
+  end
+
+  def ensure_platform_admin!
+    create_test_user(
+      "id" => "platform_admin",
+      "name" => "Platform Admin",
+      "email" => "platform@aldervon.com",
+      "password" => "password123",
+      "role" => "platform_admin"
     )
   end
 

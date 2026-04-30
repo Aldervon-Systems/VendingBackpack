@@ -6,38 +6,39 @@ class InventoryAuthority
   class InventoryError < StandardError; end
 
   class << self
-    def warehouse_inventory
-      Item.order(:name, :sku).map(&:inventory_payload)
+    def warehouse_inventory(organization:)
+      organization.items.order(:name, :sku).map(&:inventory_payload)
     end
 
-    def machine_inventory
-      Machine.order(:name, :id).includes(machine_inventories: :item).map do |machine|
+    def machine_inventory(organization:)
+      organization.machines.order(:name, :id).includes(machine_inventories: :item).map do |machine|
         machine_inventory_snapshot(machine)
       end
     end
 
-    def find_item_by_barcode(barcode)
-      item = Item.find_by(barcode: barcode.to_s.strip)
+    def find_item_by_barcode(barcode, organization:)
+      item = organization.items.find_by(barcode: barcode.to_s.strip)
       item&.payload
     end
 
-    def find_item_by_sku!(sku)
-      Item.find_by!(sku: sku.to_s)
+    def find_item_by_sku!(sku, organization:)
+      organization.items.find_by!(sku: sku.to_s)
     rescue ActiveRecord::RecordNotFound
       raise InventoryError, "Unknown SKU #{sku}"
     end
 
-    def add_stock(barcode:, name:, quantity:)
+    def add_stock(barcode:, name:, quantity:, organization:)
       qty = quantity.to_i
       raise InventoryError, "quantity must be greater than 0" unless qty.positive?
 
-      item = find_or_create_item!(barcode: barcode, name: name)
+      item = find_or_create_item!(barcode: barcode, name: name, organization: organization)
 
       Item.transaction do
         item.lock!
         new_balance = item.warehouse_quantity + qty
         item.update!(warehouse_quantity: new_balance, is_available: true)
         WarehouseMovement.create!(
+          organization: organization,
           item: item,
           movement_type: "warehouse_receive",
           quantity_delta: qty,
@@ -51,14 +52,14 @@ class InventoryAuthority
       raise InventoryError, e.message
     end
 
-    def set_machine_quantity(machine_id:, sku:, quantity:)
+    def set_machine_quantity(machine_id:, sku:, quantity:, organization:)
       target_qty = quantity.to_i
       raise InventoryError, "quantity must be >= 0" if target_qty.negative?
 
-      machine = Machine.find_by(id: machine_id.to_s)
+      machine = organization.machines.find_by(id: machine_id.to_s)
       raise InventoryError, "Machine not found" unless machine
 
-      item = find_item_by_sku!(sku)
+      item = find_item_by_sku!(sku, organization: organization)
       Item.transaction do
         item.lock!
         inventory = MachineInventory.lock.find_or_initialize_by(machine_id: machine.id, item_id: item.id)
@@ -78,6 +79,7 @@ class InventoryAuthority
         item.update!(warehouse_quantity: new_balance)
         inventory.update!(quantity: target_qty)
         WarehouseMovement.create!(
+          organization: organization,
           item: item,
           movement_type: movement_type,
           quantity_delta: -delta,
@@ -92,8 +94,9 @@ class InventoryAuthority
       raise InventoryError, e.message
     end
 
-    def create_shipment!(description:, amount:, scheduled_for:, status:)
+    def create_shipment!(description:, amount:, scheduled_for:, status:, organization:)
       shipment = Shipment.create!(
+        organization: organization,
         description: description.to_s,
         amount: amount.to_i,
         scheduled_for: parse_time!(scheduled_for),
@@ -104,28 +107,29 @@ class InventoryAuthority
       raise InventoryError, e.message
     end
 
-    def shipments
-      Shipment.order(scheduled_for: :asc, id: :asc).map(&:payload)
+    def shipments(organization:)
+      organization.shipments.order(scheduled_for: :asc, id: :asc).map(&:payload)
     end
 
-    def items_index
-      Item.order(:name, :sku).map(&:payload)
+    def items_index(organization:)
+      organization.items.order(:name, :sku).map(&:payload)
     end
 
-    def find_item(id)
-      item = Item.find_by(id: id)
+    def find_item(id, organization:)
+      item = organization.items.find_by(id: id)
       item&.payload
     end
 
-    def find_item_by_slot(slot_number)
-      item = Item.find_by(slot_number: slot_number.to_s)
+    def find_item_by_slot(slot_number, organization:)
+      item = organization.items.find_by(slot_number: slot_number.to_s)
       item&.payload
     end
 
-    def create_item!(payload)
+    def create_item!(payload, organization:)
       Item.transaction do
         quantity = payload.fetch("quantity", 0).to_i
         item = Item.create!(
+          organization: organization,
           sku: payload["sku"].presence || derive_sku(payload["barcode"], payload["name"]),
           name: payload["name"].to_s,
           description: payload["description"],
@@ -139,6 +143,7 @@ class InventoryAuthority
 
         if quantity.positive?
           WarehouseMovement.create!(
+            organization: organization,
             item: item,
             movement_type: "warehouse_receive",
             quantity_delta: quantity,
@@ -153,8 +158,8 @@ class InventoryAuthority
       raise InventoryError, e.message
     end
 
-    def update_item!(id, payload)
-      item = Item.find(id)
+    def update_item!(id, payload, organization:)
+      item = organization.items.find(id)
 
       Item.transaction do
         item.lock!
@@ -177,6 +182,7 @@ class InventoryAuthority
 
         if delta.nonzero?
           WarehouseMovement.create!(
+            organization: organization,
             item: item,
             movement_type: "warehouse_adjustment",
             quantity_delta: delta,
@@ -193,8 +199,8 @@ class InventoryAuthority
       raise InventoryError, e.message
     end
 
-    def destroy_item!(id)
-      item = Item.find_by(id: id)
+    def destroy_item!(id, organization:)
+      item = organization.items.find_by(id: id)
       raise InventoryError, "Item with id #{id} not found" unless item
 
       if item.warehouse_quantity.to_i != 0
@@ -214,23 +220,23 @@ class InventoryAuthority
       raise InventoryError, e.message
     end
 
-    def transactions
-      VendingTransaction.order(completed_at: :desc, id: :desc).includes(:item).map(&:payload)
+    def transactions(organization:)
+      organization.vending_transactions.order(completed_at: :desc, id: :desc).includes(:item).map(&:payload)
     end
 
-    def find_transaction(id)
-      transaction = VendingTransaction.includes(:item).find_by(id: id)
+    def find_transaction(id, organization:)
+      transaction = organization.vending_transactions.includes(:item).find_by(id: id)
       transaction&.payload
     end
 
-    def create_transaction!(payload)
+    def create_transaction!(payload, organization:)
       item_id = payload["itemId"].to_i
       raise InventoryError, "itemId is required" if item_id <= 0
 
       machine_id = payload["machineId"].to_s.strip
       raise InventoryError, "machineId is required" if machine_id.blank?
 
-      item = Item.find_by(id: item_id)
+      item = organization.items.find_by(id: item_id)
       raise InventoryError, "Item #{item_id} not found" unless item
 
       amount = payload["amount"].presence ? payload["amount"].to_f : item.price.to_f
@@ -239,14 +245,18 @@ class InventoryAuthority
       transaction = nil
 
       Item.transaction do
-        inventory = MachineInventory.lock.find_by(machine_id: machine_id, item_id: item.id)
+        machine = organization.machines.find_by(id: machine_id)
+        raise InventoryError, "Machine not found" unless machine
+
+        inventory = MachineInventory.lock.find_by(machine_id: machine.id, item_id: item.id)
         raise InventoryError, "Machine inventory row not found" unless inventory
         raise InventoryError, "Item #{item.name} is not available" if inventory.quantity.to_i <= 0
 
         inventory.update!(quantity: inventory.quantity.to_i - 1)
         transaction = VendingTransaction.create!(
+          organization: organization,
           item: item,
-          machine_id: machine_id,
+          machine_id: machine.id,
           slot_number: payload["slotNumber"].presence || item.slot_number,
           amount: amount,
           status: VendingTransaction::STATUS_COMPLETED,
@@ -261,8 +271,8 @@ class InventoryAuthority
       raise InventoryError, e.message
     end
 
-    def refund_transaction!(id)
-      transaction = VendingTransaction.includes(:item).find_by(id: id)
+    def refund_transaction!(id, organization:)
+      transaction = organization.vending_transactions.includes(:item).find_by(id: id)
       raise InventoryError, "Transaction #{id} not found" unless transaction
       raise InventoryError, "Transaction already refunded" if transaction.status == VendingTransaction::STATUS_REFUNDED
 
@@ -284,12 +294,12 @@ class InventoryAuthority
       raise InventoryError, e.message
     end
 
-    def daily_stats
+    def daily_stats(organization:)
       base_date = Time.zone.today
 
       (0..6).map do |offset|
         date = base_date - (6 - offset)
-        rows = VendingTransaction.where(completed_at: date.beginning_of_day..date.end_of_day)
+        rows = organization.vending_transactions.where(completed_at: date.beginning_of_day..date.end_of_day)
         amount = rows.sum do |transaction|
           transaction.status == VendingTransaction::STATUS_REFUNDED ? -transaction.amount.to_f : transaction.amount.to_f
         end
@@ -305,7 +315,11 @@ class InventoryAuthority
     private
 
     def machine_inventory_snapshot(machine)
-      rows = machine.machine_inventories.joins(:item).includes(:item).order("items.name ASC, items.sku ASC")
+      rows = machine.machine_inventories
+        .joins(:item)
+        .includes(:item)
+        .where(items: { organization_id: machine.organization_id })
+        .order("items.name ASC, items.sku ASC")
 
       {
         "machineId" => machine.id,
@@ -316,20 +330,20 @@ class InventoryAuthority
       }
     end
 
-    def find_or_create_item!(barcode:, name:)
+    def find_or_create_item!(barcode:, name:, organization:)
       normalized_barcode = barcode.to_s.strip
       normalized_name = name.to_s.strip
       raise InventoryError, "name is required" if normalized_name.blank?
 
       if normalized_barcode.present?
-        Item.find_or_create_by!(barcode: normalized_barcode) do |item|
+        organization.items.find_or_create_by!(barcode: normalized_barcode) do |item|
           item.sku = derive_sku(normalized_barcode, normalized_name)
           item.name = normalized_name
           item.is_available = true
         end
       else
         sku = derive_sku(nil, normalized_name)
-        Item.find_or_create_by!(sku: sku) do |item|
+        organization.items.find_or_create_by!(sku: sku) do |item|
           item.name = normalized_name
           item.is_available = true
         end

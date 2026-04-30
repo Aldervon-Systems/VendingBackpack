@@ -7,11 +7,11 @@ module Api
     before_action :require_manager!, only: %i[create update destroy]
 
     def index
-      render json: InventoryAuthority.items_index
+      render json: InventoryAuthority.items_index(organization: current_organization)
     end
 
     def show
-      item = InventoryAuthority.find_item(params[:id])
+      item = InventoryAuthority.find_item(params[:id], organization: current_organization)
       if item
         render json: item
       else
@@ -21,7 +21,7 @@ module Api
 
     def slot
       slot_number = params[:slot_number].to_s
-      item = InventoryAuthority.find_item_by_slot(slot_number)
+      item = InventoryAuthority.find_item_by_slot(slot_number, organization: current_organization)
       if item
         render json: item
       else
@@ -38,12 +38,12 @@ module Api
       end
 
       slot_number = payload["slotNumber"].to_s
-      if slot_number.present? && Item.exists?(slot_number: slot_number)
+      if slot_number.present? && current_organization.items.exists?(slot_number: slot_number)
         render json: { detail: "Slot #{slot_number} is already occupied" }, status: :bad_request
         return
       end
 
-      item = InventoryAuthority.create_item!(payload)
+      item = InventoryAuthority.create_item!(payload, organization: current_organization)
       render json: item, status: :created
     rescue InventoryAuthority::InventoryError => e
       render json: { detail: e.message }, status: :unprocessable_entity
@@ -51,7 +51,7 @@ module Api
 
     def update
       payload = JSON.parse(request.raw_post.presence || "{}")
-      if payload["slotNumber"].present? && Item.where(slot_number: payload["slotNumber"].to_s).where.not(id: params[:id]).exists?
+      if payload["slotNumber"].present? && current_organization.items.where(slot_number: payload["slotNumber"].to_s).where.not(id: params[:id]).exists?
         render json: { detail: "Slot #{payload['slotNumber']} is already occupied" }, status: :bad_request
         return
       end
@@ -64,20 +64,20 @@ module Api
         return
       end
 
-      item = InventoryAuthority.update_item!(params[:id], payload)
+      item = InventoryAuthority.update_item!(params[:id], payload, organization: current_organization)
       render json: item
     rescue InventoryAuthority::InventoryError => e
       render json: { detail: e.message }, status: :unprocessable_entity
     end
 
     def destroy
-      item = InventoryAuthority.find_item(params[:id])
+      item = InventoryAuthority.find_item(params[:id], organization: current_organization)
       unless item
         render json: { detail: "Item with id #{params[:id]} not found" }, status: :not_found
         return
       end
 
-      InventoryAuthority.destroy_item!(params[:id])
+      InventoryAuthority.destroy_item!(params[:id], organization: current_organization)
       head :no_content
     rescue InventoryAuthority::InventoryError => e
       render json: { detail: e.message }, status: :unprocessable_entity

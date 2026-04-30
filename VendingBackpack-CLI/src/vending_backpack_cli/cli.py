@@ -26,6 +26,12 @@ def _surface_control_path() -> Path:
     return Path(home) / ".vending-backpack" / "surface-control.json"
 
 
+def _clear_surface_control() -> None:
+    path = _surface_control_path()
+    if path.exists():
+        path.unlink()
+
+
 def _dart_app_path() -> Path:
     repo_root = Path(__file__).resolve().parents[3]
     return repo_root / "Frontend" / "build" / "macos" / "Build" / "Products" / "Debug" / "vending_backpack_v2.app"
@@ -146,6 +152,7 @@ def _run_main_wizard(api: VbpApi, store: SessionStore, session: SessionData | No
             _launch_dart_app(target_options[target_choice - 1], as_json)
         elif selection == 6:
             store.clear()
+            _clear_surface_control()
             api.set_access_token(None)
             session = None
             print("Session cleared.")
@@ -195,6 +202,7 @@ def main() -> None:
             _print(api.me(), args.json)
         elif args.command == "logout":
             store.clear()
+            _clear_surface_control()
             print("Session cleared.")
         elif args.command == "launch":
             _launch_dart_app(args.target, args.json)
