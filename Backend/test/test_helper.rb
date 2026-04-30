@@ -2,40 +2,87 @@ ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
 
+module TestIdentityHelpers
+  def create_test_organization(id:, name: "Aldervon Systems", manager_id: nil, admin_password: "admin", totp_seed: "JBSWY3DPEHPK3PXP")
+    organization = Organization.find_or_initialize_by(id: id)
+    organization.name = name
+    organization.manager_id = manager_id
+    organization.totp_seed = totp_seed
+    organization.admin_password = admin_password
+    organization.admin_password_confirmation = admin_password
+    organization.save!
+    organization
+  end
+
+  def create_test_user(user)
+    organization_id = user["organization_id"].presence
+    create_test_organization(id: organization_id) if organization_id
+
+    record = User.find_or_initialize_by(id: user.fetch("id").to_s)
+    record.name = user["name"].presence || user.fetch("id").to_s.humanize
+    record.email = user.fetch("email", "#{user.fetch('id')}@example.com").to_s.downcase
+    record.role = user.fetch("role").to_s
+    record.organization_id = organization_id
+
+    password = user["password"].presence || "password123"
+    record.password = password
+    record.password_confirmation = password
+    record.save!
+
+    record.organization&.update!(manager: record) if record.role == "manager" && record.organization&.manager_id.nil?
+    record
+  end
+end
+
 class ActiveSupport::TestCase
+  include TestIdentityHelpers
+
   parallelize(workers: 1)
+
+  setup do
+    next unless ActiveRecord::Base.connected?
+
+    [
+      VendingTransaction,
+      WarehouseMovement,
+      MachineInventory,
+      Shipment,
+      Stop,
+      Route,
+      Machine,
+      Item,
+      Employee,
+      OrganizationWhitelistEntry,
+      User,
+      Organization
+    ].each do |model|
+      next unless model.table_exists?
+
+      model.delete_all
+    end
+
+    create_test_organization(id: "org_aldervon") if Organization.table_exists?
+  end
 end
 
 class ActionDispatch::IntegrationTest
+  include TestIdentityHelpers
+
   private
 
   def with_stubbed_user(user)
-    real_api = Fixtures::MockApi.new
-    fake_api = Object.new
-    fake_api.define_singleton_method(:find_user_by_id) do |id|
-      id.to_s == user.fetch("id").to_s ? user : nil
-    end
-    fake_api.define_singleton_method(:method_missing) do |name, *args, &block|
-      raise NoMethodError, "undefined method `#{name}` for #{self}" unless real_api.respond_to?(name)
-
-      real_api.public_send(name, *args, &block)
-    end
-    fake_api.define_singleton_method(:respond_to_missing?) do |name, include_private = false|
-      real_api.respond_to?(name, include_private)
-    end
-
-    original_new = Fixtures::MockApi.method(:new)
-    Fixtures::MockApi.define_singleton_method(:new) do |*_args, **_kwargs, &_block|
-      fake_api
-    end
-
+    create_test_user(user)
     yield
-  ensure
-    Fixtures::MockApi.define_singleton_method(:new, original_new)
   end
 
   def manager_headers
+    ensure_default_manager!
     auth_headers(user_id: "user_admin", role: "manager", organization_id: "org_aldervon")
+  end
+
+  def platform_admin_headers
+    ensure_platform_admin!
+    auth_headers(user_id: "platform_admin", role: "platform_admin", organization_id: nil)
   end
 
   def employee_headers(user_id:, organization_id: "org_aldervon")
@@ -61,4 +108,26 @@ class ActionDispatch::IntegrationTest
   def json_response
     JSON.parse(response.body)
   end
+
+  def ensure_default_manager!
+    create_test_user(
+      "id" => "user_admin",
+      "name" => "Admin Manager",
+      "email" => "admin@vbp.com",
+      "password" => "password123",
+      "role" => "manager",
+      "organization_id" => "org_aldervon"
+    )
+  end
+
+  def ensure_platform_admin!
+    create_test_user(
+      "id" => "platform_admin",
+      "name" => "Platform Admin",
+      "email" => "platform@aldervon.com",
+      "password" => "password123",
+      "role" => "platform_admin"
+    )
+  end
+
 end

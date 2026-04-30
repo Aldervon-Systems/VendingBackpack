@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vending_backpack_v2/core/contracts/operations.dart';
 import 'package:vending_backpack_v2/modules/dashboard/widgets/MachineStopCard.dart';
 
 void main() {
@@ -8,8 +9,22 @@ void main() {
     const machineId = 'M-101';
     const machineName = 'Test Machine';
     final items = [
-      {'sku': 'SKU1', 'name': 'Item 1', 'qty': 10},
-      {'sku': 'SKU2', 'name': 'Item 2', 'qty': 5},
+      MachineInventoryItemDto(
+        itemId: 1,
+        sku: 'SKU1',
+        name: 'Item 1',
+        quantity: 10,
+        barcode: null,
+        slotNumber: null,
+      ),
+      MachineInventoryItemDto(
+        itemId: 2,
+        sku: 'SKU2',
+        name: 'Item 2',
+        quantity: 5,
+        barcode: null,
+        slotNumber: null,
+      ),
     ];
 
     await tester.pumpWidget(

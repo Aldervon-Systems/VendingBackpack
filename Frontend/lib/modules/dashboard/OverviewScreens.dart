@@ -127,12 +127,11 @@ class _DashboardHome extends StatelessWidget {
         const SizedBox(height: 16),
         const Text('Machines Status', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        ...metrics.inventory.keys.map((mid) {
-          final items = metrics.inventory[mid] ?? [];
+        ...metrics.inventory.map((snapshot) {
           return MachineStopCard(
-            machineId: mid,
-            machineName: 'Machine $mid', // We could fetch real names later
-            items: items,
+            machineId: snapshot.machineId,
+            machineName: snapshot.machineName,
+            items: snapshot.items,
             isOnline: true,
           );
         }),

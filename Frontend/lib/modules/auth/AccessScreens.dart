@@ -3,9 +3,12 @@ import 'SessionManager.dart';
 import 'OrganizationOnboardingScreen.dart';
 import 'package:provider/provider.dart';
 import '../../core/styles/AppStyle.dart';
+import '../../core/services/SurfaceControl.dart';
 
 class AccessScreens extends StatefulWidget {
-  const AccessScreens({super.key});
+  const AccessScreens({super.key, this.initialTarget});
+
+  final SurfaceLaunchTarget? initialTarget;
 
   @override
   State<AccessScreens> createState() => _AccessScreensState();
@@ -23,6 +26,14 @@ class _AccessScreensState extends State<AccessScreens> {
   String? _selectedOrgName;
   List<Map<String, dynamic>> _orgSearchResults = [];
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialTarget == SurfaceLaunchTarget.authRegister) {
+      _isLoginMode = false;
+    }
+  }
 
   Future<void> _handleSubmit() async {
     setState(() {

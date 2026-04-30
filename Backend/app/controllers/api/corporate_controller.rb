@@ -14,20 +14,19 @@ module Api
         return
       end
 
-      api = Fixtures::MockApi.new
-      snapshot = api.corporate_snapshot(org_id)
+      snapshot = SeedCorporateSnapshots.fetch(org_id)
 
       unless snapshot.is_a?(Hash)
         render json: { detail: "Corporate snapshot not found" }, status: :not_found
         return
       end
 
-      organization = api.find_organization(org_id)
+      organization = Organization.find_by(id: org_id)
       meta = snapshot.fetch("meta", {})
 
       render json: snapshot.merge(
         "meta" => {
-          "organizationName" => organization&.fetch("name", meta["organizationName"]) || "Organization",
+          "organizationName" => organization&.name || meta["organizationName"] || "Organization",
           "generatedAt" => Time.now.utc.iso8601,
           "reportingPeriod" => meta["reportingPeriod"].to_s,
           "machineCount" => meta["machineCount"].to_i,

@@ -29,10 +29,10 @@ The current production target is the Rails backend plus the `Frontend-Next` web 
 
 ## Quick Start
 
-1. Start the seeded local stack:
+1. Start the local stack with SQL-seeded staging accounts:
 
 ```bash
-ALLOW_SEED_AUTH=true SEED_DEMO_DATA=true FRONTEND_AUTH_MODE=seed docker compose up -d --build backend frontend
+SEED_DEMO_DATA=true docker compose up -d --build backend frontend
 ```
 
 2. Open:
@@ -45,7 +45,7 @@ ALLOW_SEED_AUTH=true SEED_DEMO_DATA=true FRONTEND_AUTH_MODE=seed docker compose 
 - Manager: `renee@aldervon.com`
 - Employee: `amanda.jones@example.com`
 - Organization search: `Aldervon Systems`
-- Password: any value in `FRONTEND_AUTH_MODE=seed`
+- Password: `password123`
 
 ## Local Development (No Docker)
 
@@ -70,9 +70,7 @@ flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:9090/api
 The stack uses environment variables for configuration. See `docker-compose.yml` for details.
 - `RAILS_ENV`: set to `production` or `development`
 - `SECRET_KEY_BASE`: required for production mode
-- `ALLOW_SEED_AUTH`: enables local seeded bearer tokens for browser validation
 - `SEED_DEMO_DATA`: seeds the local backend on container boot
-- `FRONTEND_AUTH_MODE`: set to `seed` for the seeded preview login flow
 - `FRONTEND_IMAGE`: defaults to `ghcr.io/aldervon-systems/vendingbackpack/frontend-next:latest`
 - `BACKEND_IMAGE`: defaults to `ghcr.io/aldervon-systems/vendingbackpack/backend:latest`
 

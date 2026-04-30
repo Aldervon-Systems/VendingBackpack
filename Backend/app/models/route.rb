@@ -1,6 +1,9 @@
 class Route < ApplicationRecord
+  belongs_to :organization, optional: true
   belongs_to :employee
   has_many :stops, -> { order(position: :asc) }, dependent: :destroy
+
+  before_validation :assign_employee_organization_if_blank
 
   def payload
     {
@@ -26,5 +29,11 @@ class Route < ApplicationRecord
       "createdAt" => nil,
       "updatedAt" => nil
     }
+  end
+
+  private
+
+  def assign_employee_organization_if_blank
+    self.organization_id ||= employee&.organization_id
   end
 end

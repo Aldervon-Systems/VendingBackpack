@@ -13,6 +13,18 @@ class ApplicationController < ActionController::API
     render json: { detail: "Forbidden" }, status: :forbidden
   end
 
+  def require_platform_admin!
+    return if current_user && current_user["role"].to_s.downcase == "platform_admin"
+
+    render json: { detail: "Forbidden" }, status: :forbidden
+  end
+
+  def require_current_organization!
+    return if current_organization
+
+    render json: { detail: "Organization not found" }, status: :not_found
+  end
+
   def require_org_match!(org_id = params[:organization_id])
     return if current_user && current_user["organization_id"].to_s == org_id.to_s
 
@@ -31,9 +43,20 @@ class ApplicationController < ActionController::API
   def ensure_employee_parity!
     return unless current_user
     return unless current_user["role"].to_s.downcase == "employee"
-    return if Employee.exists?(id: current_user["id"].to_s)
+    return if current_organization&.employees&.exists?(id: current_user["id"].to_s)
 
     render json: { detail: "Forbidden" }, status: :forbidden
+  end
+
+  def not_found!
+    render json: { detail: "Not found" }, status: :not_found
+  end
+
+  def current_organization
+    return @current_organization if defined?(@current_organization)
+
+    org_id = current_user&.dig("organization_id").to_s
+    @current_organization = org_id.present? ? Organization.find_by(id: org_id) : nil
   end
 
   def current_user
@@ -41,12 +64,8 @@ class ApplicationController < ActionController::API
 
     token = bearer_token
     payload = decode_access_token(token)
-    @current_user =
-      if payload
-        Fixtures::MockApi.new.find_user_by_id(payload["sub"])
-      else
-        SeedAuth.find_user_by_token(token)
-      end
+    user = payload ? User.includes(:organization).find_by(id: payload["sub"].to_s) : nil
+    @current_user = user&.auth_payload
   end
 
   def bearer_token

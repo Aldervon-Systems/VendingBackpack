@@ -1,7 +1,55 @@
+organization_id = "org_aldervon"
+seed_totp = ENV.fetch("SEED_ADMIN_TOTP_SEED", "JBSWY3DPEHPK3PXP")
+seed_admin_password = ENV.fetch("SEED_ADMIN_PASSWORD", "admin")
+seed_user_password = ENV.fetch("SEED_USER_PASSWORD", "password123")
+
+puts "Seeding organizations..."
+organization = Organization.find_or_initialize_by(id: organization_id)
+organization.name = "Aldervon Systems"
+organization.totp_seed = seed_totp
+organization.admin_password = seed_admin_password
+organization.admin_password_confirmation = seed_admin_password
+organization.save!
+
+puts "Seeding runtime users..."
+seed_users = [
+  { id: "platform_admin", name: "Platform Admin", email: "platform@aldervon.com", role: "platform_admin" },
+  { id: "user_admin", name: "Admin Manager", email: "admin@vbp.com", role: "manager" },
+  { id: "renee_goodman", name: "Renee Goodman", email: "renee@aldervon.com", role: "manager" },
+  { id: "emp-07", name: "Amanda Jones", email: "amanda.jones@example.com", role: "employee" }
+]
+
+seed_users.each do |data|
+  user = User.find_or_initialize_by(id: data[:id])
+  user.name = data[:name]
+  user.email = data[:email]
+  user.role = data[:role]
+  user.organization = data[:role] == "platform_admin" ? nil : organization
+  user.password = seed_user_password
+  user.password_confirmation = seed_user_password
+  user.save!
+end
+
+organization.update!(manager: User.find("renee_goodman"))
+
+puts "Seeding organization whitelist..."
+seed_whitelist = [
+  "employee@aldervon.com",
+  "manager@aldervon.com",
+  "admin@aldervon.com",
+  "renee@aldervon.com",
+  "amanda.jones@example.com"
+]
+
+organization.organization_whitelist_entries.delete_all
+seed_whitelist.each do |email|
+  organization.organization_whitelist_entries.create!(email: email)
+end
+
 employees = [
-  { id: "emp-07", name: "Amanda Jones", color: 0xFF4A90E2, department: "Operations", location: "Downtown Hub", floor: "2", building: "North Tower", is_active: true },
-  { id: "emp-11", name: "Luis Vega", color: 0xFF50E3C2, department: "Operations", location: "Cambridge Node", floor: "1", building: "West Annex", is_active: true },
-  { id: "emp-13", name: "Maya Chen", color: 0xFFF5A623, department: "Field Service", location: "Harbor Depot", floor: "1", building: "Warehouse", is_active: true }
+  { id: "emp-07", name: "Amanda Jones", color: 0xFF4A90E2, department: "Operations", location: "Downtown Hub", floor: "2", building: "North Tower", is_active: true, organization_id: organization_id },
+  { id: "emp-11", name: "Luis Vega", color: 0xFF50E3C2, department: "Operations", location: "Cambridge Node", floor: "1", building: "West Annex", is_active: true, organization_id: organization_id },
+  { id: "emp-13", name: "Maya Chen", color: 0xFFF5A623, department: "Field Service", location: "Harbor Depot", floor: "1", building: "Warehouse", is_active: true, organization_id: organization_id }
 ]
 
 machines = [
@@ -12,10 +60,10 @@ machines = [
 ]
 
 items = [
-  { sku: "cold_brew", name: "Cold Brew", barcode: "111", description: "Chilled coffee can", price: 4.25, slot_number: "A1", warehouse_quantity: 18, is_available: true },
-  { sku: "sparkling_water", name: "Sparkling Water", barcode: "222", description: "Lime sparkling water", price: 2.75, slot_number: "A2", warehouse_quantity: 24, is_available: true },
-  { sku: "protein_bar", name: "Protein Bar", barcode: "333", description: "Chocolate protein bar", price: 3.5, slot_number: "B1", warehouse_quantity: 14, is_available: true },
-  { sku: "trail_mix", name: "Trail Mix", barcode: "444", description: "Roasted almond trail mix", price: 3.95, slot_number: "B2", warehouse_quantity: 10, is_available: true }
+  { sku: "cold_brew", name: "Cold Brew", barcode: "111", description: "Chilled coffee can", price: 4.25, slot_number: "A1", warehouse_quantity: 18, is_available: true, organization_id: organization_id },
+  { sku: "sparkling_water", name: "Sparkling Water", barcode: "222", description: "Lime sparkling water", price: 2.75, slot_number: "A2", warehouse_quantity: 24, is_available: true, organization_id: organization_id },
+  { sku: "protein_bar", name: "Protein Bar", barcode: "333", description: "Chocolate protein bar", price: 3.5, slot_number: "B1", warehouse_quantity: 14, is_available: true, organization_id: organization_id },
+  { sku: "trail_mix", name: "Trail Mix", barcode: "444", description: "Roasted almond trail mix", price: 3.95, slot_number: "B2", warehouse_quantity: 10, is_available: true, organization_id: organization_id }
 ]
 
 machine_inventory_targets = {
@@ -32,8 +80,8 @@ route_targets = {
 }
 
 shipments = [
-  { description: "Downtown restock wave", amount: 48, scheduled_for: Time.zone.now.change(hour: 14, min: 0), status: "scheduled" },
-  { description: "Cambridge emergency refill", amount: 18, scheduled_for: Time.zone.now.change(hour: 17, min: 30), status: "scheduled" }
+  { description: "Downtown restock wave", amount: 48, scheduled_for: Time.zone.now.change(hour: 14, min: 0), status: "scheduled", organization_id: organization_id },
+  { description: "Cambridge emergency refill", amount: 18, scheduled_for: Time.zone.now.change(hour: 17, min: 30), status: "scheduled", organization_id: organization_id }
 ]
 
 transactions = [
@@ -77,6 +125,7 @@ puts "Seeding routes..."
 route_targets.each do |employee_id, machine_ids|
   employee = Employee.find_by!(id: employee_id)
   route = Route.find_or_initialize_by(employee_id: employee.id)
+  route.organization = organization
   route.employee = employee
   route.employee_name = employee.name
   route.distance_meters = 0
@@ -118,6 +167,7 @@ transactions.each do |data|
     completed_at: data[:completed_at]
   )
   transaction.slot_number = item.slot_number
+  transaction.organization = organization
   transaction.amount = data[:amount]
   transaction.status = VendingTransaction::STATUS_COMPLETED
   transaction.payment_method = data[:payment_method]

@@ -1,12 +1,14 @@
 class Item < ApplicationRecord
+  belongs_to :organization, optional: true
   has_many :machine_inventories, dependent: :destroy
   has_many :warehouse_movements, dependent: :destroy
 
   before_validation :normalize_blank_values
+  before_validation :assign_single_organization_if_blank
 
-  validates :sku, presence: true, uniqueness: true
+  validates :sku, presence: true, uniqueness: { scope: :organization_id }
   validates :name, presence: true
-  validates :barcode, uniqueness: true, allow_blank: true
+  validates :barcode, uniqueness: { scope: :organization_id }, allow_blank: true
   validates :warehouse_quantity, numericality: { greater_than_or_equal_to: 0 }
 
   def inventory_payload
@@ -43,5 +45,11 @@ class Item < ApplicationRecord
     self.slot_number = slot_number.presence
     self.image_url = image_url.presence
     self.description = description.presence
+  end
+
+  def assign_single_organization_if_blank
+    return if organization_id.present?
+
+    self.organization = Organization.first if Organization.count == 1
   end
 end

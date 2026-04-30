@@ -20,6 +20,26 @@ class SettingsMenu extends StatelessWidget {
       children: [
         Text('CONFIGURATION / SESSION', style: AppStyle.label(fontWeight: FontWeight.w800, color: AppColors.dataPrimary, letterSpacing: 1.0)),
         const SizedBox(height: 24),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.foundation,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(session.currentUser?.name.toUpperCase() ?? 'NO SESSION', style: AppStyle.label(fontWeight: FontWeight.bold, color: AppColors.dataPrimary)),
+              const SizedBox(height: 4),
+              Text(session.currentUser?.email ?? 'Not signed in', style: AppStyle.label(fontSize: 10)),
+              const SizedBox(height: 4),
+              Text('ROLE: ${session.effectiveRole.toUpperCase()}', style: AppStyle.label(fontSize: 10, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
         if (session.isManager) ...[
           Container(
             padding: const EdgeInsets.all(16),

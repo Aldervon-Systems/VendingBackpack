@@ -9,7 +9,7 @@ module Api
     before_action :ensure_employee_parity_for_self!, only: %i[routes_for]
 
     def show
-      employee = Employee.find_by(id: params[:id])
+      employee = current_organization.employees.find_by(id: params[:id])
       if employee
         render json: employee.payload
       else
@@ -18,17 +18,17 @@ module Api
     end
 
     def routes_index
-      render json: Route.includes(stops: :machine).order(:employee_name, :employee_id).map(&:payload)
+      render json: current_organization.routes.includes(stops: :machine).order(:employee_name, :employee_id).map(&:payload)
     end
 
     def routes_for
-      employee = Employee.find_by(id: params[:id])
+      employee = current_organization.employees.find_by(id: params[:id])
       unless employee
         render json: { detail: "Employee not found" }, status: :not_found
         return
       end
 
-      route = Route.find_by(employee_id: params[:id])
+      route = current_organization.routes.find_by(employee_id: params[:id])
       render json: route ? route.payload : Route.empty_payload(employee)
     end
 
@@ -36,12 +36,12 @@ module Api
       employee_id = params[:id].to_s
       machine_id = params[:machineId].to_s
 
-      machine = Machine.find_by(id: machine_id)
+      machine = current_organization.machines.find_by(id: machine_id)
       unless machine
         return render json: { detail: "Machine not found" }, status: :not_found
       end
 
-      employee = Employee.find_by(id: employee_id)
+      employee = current_organization.employees.find_by(id: employee_id)
       unless employee
         return render json: { detail: "Employee not found" }, status: :not_found
       end
@@ -89,7 +89,7 @@ module Api
       employee_id = params[:id].to_s
       stop_ids = params[:stopIds] || []
 
-      employee = Employee.find_by(id: employee_id)
+      employee = current_organization.employees.find_by(id: employee_id)
       return render json: { detail: "Employee not found" }, status: :not_found unless employee
 
       route = find_or_initialize_route_for(employee)
@@ -97,7 +97,7 @@ module Api
       route.stops.destroy_all
 
       stop_ids.each_with_index do |sid, index|
-        machine = Machine.find_by(id: sid)
+        machine = current_organization.machines.find_by(id: sid)
         route.stops.create!(machine: machine, position: index) if machine
       end
 
@@ -107,10 +107,10 @@ module Api
     end
 
     def autogenerate_all
-      all_machines = Machine.all
-      active_employees = Employee.where(is_active: true)
+      all_machines = current_organization.machines
+      active_employees = current_organization.employees.where(is_active: true)
 
-      Route.destroy_all
+      current_organization.routes.destroy_all
 
       generated_routes = []
 
@@ -118,13 +118,13 @@ module Api
         next if machine.id == "W-01"
 
         nearest_emp = active_employees.min_by do |emp|
-          base_loc = Machine.find_by(name: emp.location) || all_machines.first
+          base_loc = current_organization.machines.find_by(name: emp.location) || all_machines.first
           dist(base_loc.as_json, machine.as_json)
         end
 
         route = generated_routes.find { |r| r.employee_id == nearest_emp.id }
         unless route
-          route = Route.create!(
+          route = current_organization.routes.create!(
             employee: nearest_emp,
             employee_name: nearest_emp.name
           )
@@ -139,7 +139,7 @@ module Api
 
         sorted_stops = []
         emp = route.employee
-        current_pos = Machine.find_by(name: emp.location) || all_machines.first
+        current_pos = current_organization.machines.find_by(name: emp.location) || all_machines.first
 
         remaining = route.stops.to_a
         route.stops.delete_all
@@ -158,7 +158,7 @@ module Api
         update_route_distance(route)
       end
 
-      render json: { status: "success", routes: Route.includes(stops: :machine).order(:employee_name, :employee_id).map(&:payload) }
+      render json: { status: "success", routes: current_organization.routes.includes(stops: :machine).order(:employee_name, :employee_id).map(&:payload) }
     end
 
     private
@@ -182,7 +182,7 @@ module Api
     end
 
     def find_or_initialize_route_for(employee)
-      route = Route.find_or_initialize_by(employee_id: employee.id)
+      route = current_organization.routes.find_or_initialize_by(employee_id: employee.id)
       route.employee = employee
       route.employee_name = employee.name
       route.save! if route.new_record? || route.changed?

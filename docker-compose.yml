@@ -9,7 +9,6 @@ services:
       RAILS_ENV: production
       PORT: 9090
       BINDING: 0.0.0.0
-      ALLOW_SEED_AUTH: ${ALLOW_SEED_AUTH:-false}
       SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
       SECRET_KEY_BASE: ${SECRET_KEY_BASE:-fe12ec71223c92b31df728b8f8159c44618a53c6121f7537533c6afb8e500550f3c362ba522ef34f6d93dd81932de64b8f7170dabebd6a618ee2f57f1bba5fae}
     ports:
@@ -20,8 +19,6 @@ services:
   frontend:
     build:
       context: ./Frontend-Next
-      args:
-        AUTH_MODE: ${FRONTEND_AUTH_MODE:-api}
     image: ${FRONTEND_IMAGE:-vendingbackpack/frontend-next:local}
     container_name: vending_frontend
     restart: unless-stopped

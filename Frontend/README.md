@@ -4,10 +4,12 @@
 ## Demo accounts
 
 - Manager
-	- Email: `Simon.swartout@gmail.com`
-	- Password: `test123`
+	- Email: `renee@aldervon.com`
+	- Password: `password123`
 
 - Employee
 	- Email: `amanda.jones@example.com`
-	- Password: `employee123`
+	- Password: `password123`
 
+- Organization search
+	- `Aldervon Systems`

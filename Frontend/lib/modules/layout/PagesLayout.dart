@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../auth/SessionManager.dart';
+import '../corporate/CorporateScreen.dart';
 import '../dashboard/DashboardHome.dart';
 import '../routes/MapInterface.dart';
 import '../settings/SettingsMenu.dart';
 import '../warehouse/StockScreens.dart';
 import '../../core/ui_kit/OverlayBlurWindow.dart';
 import '../../core/styles/AppStyle.dart';
-import 'MainContent.dart';
 import 'Sidebar.dart';
 
 import '../auth/OrganizationAdminModal.dart';
 
 import '../routes/RoutePlanner.dart';
+import '../../core/services/SurfaceControl.dart';
 
 class PagesLayout extends StatefulWidget {
-  const PagesLayout({super.key});
+  const PagesLayout({super.key, this.initialTarget});
+
+  final SurfaceLaunchTarget? initialTarget;
 
   @override
   State<PagesLayout> createState() => _PagesLayoutState();
@@ -25,6 +28,21 @@ class _PagesLayoutState extends State<PagesLayout> {
   double leftBannerWidth = 240;
   int selectedPage = 0;
   bool showSettingsOverlay = false;
+
+  @override
+  void initState() {
+    super.initState();
+    switch (widget.initialTarget) {
+      case SurfaceLaunchTarget.routes:
+        selectedPage = 1;
+      case SurfaceLaunchTarget.warehouse:
+        selectedPage = 2;
+      case SurfaceLaunchTarget.settings:
+        showSettingsOverlay = true;
+      default:
+        selectedPage = 0;
+    }
+  }
 
   bool get isMobile => MediaQuery.of(context).size.width < 768; // Slightly larger break for Clean Lab feel
 
@@ -36,6 +54,7 @@ class _PagesLayoutState extends State<PagesLayout> {
     
     // Add Admin tab for managers
     if (session.isManager) {
+      tabs.add(const _TabSpec(label: 'Corporate', icon: Icons.business_center_outlined, page: CorporateScreen()));
       tabs.add(_TabSpec(
         label: 'Admin', 
         icon: Icons.admin_panel_settings_outlined, 

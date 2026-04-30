@@ -1,11 +1,15 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/ApiClient.dart';
 import '../../core/models/User.dart';
+import '../../core/repositories/auth_repository.dart';
 
 class SessionManager extends ChangeNotifier {
-  final ApiClient _api = ApiClient();
+  static bool disableCliSessionImportForTests = false;
+
+  final AuthRepository _authRepository = AuthRepository();
   static const String _tokenStorageKey = 'auth_access_token';
   static const String _userStorageKey = 'auth_user_json';
   User? _currentUser;
@@ -41,23 +45,15 @@ class SessionManager extends ChangeNotifier {
     String? organizationId,
   }) async {
     try {
-      final response = await _api.post('/token', {
-        'email': email,
-        'password': password,
-        'organization_id': organizationId,
-      });
-
-      final accessToken = response['access_token']?.toString();
-      if (accessToken == null || accessToken.isEmpty) {
-        throw Exception('Authentication failed: missing access token');
-      }
-      ApiClient.setAccessToken(accessToken);
-
-      final userData = response['user'];
-      _currentUser = User.fromJson(userData);
+      final session = await _authRepository.login(
+        email: email,
+        password: password,
+        organizationId: organizationId,
+      );
+      _currentUser = session.user;
       _isAuthenticated = true;
       _roleOverride = null;
-      await _persistSession(accessToken: accessToken, user: _currentUser!);
+      await _persistSession(accessToken: session.accessToken, user: _currentUser!);
       notifyListeners();
     } catch (e) {
       debugPrint('Login failed: $e');
@@ -73,25 +69,17 @@ class SessionManager extends ChangeNotifier {
     String? organizationId,
   }) async {
     try {
-      final response = await _api.post('/signup', {
-        'name': name,
-        'email': email,
-        'password': password,
-        'role': role,
-        'organization_id': organizationId,
-      });
-
-      final accessToken = response['access_token']?.toString();
-      if (accessToken == null || accessToken.isEmpty) {
-        throw Exception('Signup failed: missing access token');
-      }
-      ApiClient.setAccessToken(accessToken);
-
-      final userData = response['user'];
-      _currentUser = User.fromJson(userData);
+      final session = await _authRepository.signup(
+        name: name,
+        email: email,
+        password: password,
+        role: role,
+        organizationId: organizationId,
+      );
+      _currentUser = session.user;
       _isAuthenticated = true;
       _roleOverride = null;
-      await _persistSession(accessToken: accessToken, user: _currentUser!);
+      await _persistSession(accessToken: session.accessToken, user: _currentUser!);
       notifyListeners();
     } catch (e) {
       debugPrint('Signup failed: $e');
@@ -100,8 +88,7 @@ class SessionManager extends ChangeNotifier {
   }
 
   Future<List<Map<String, dynamic>>> searchOrganizations(String query) async {
-    final response = await _api.get('/organizations/search?q=$query');
-    return List<Map<String, dynamic>>.from(response);
+    return _authRepository.searchOrganizations(query);
   }
 
   Future<Map<String, dynamic>> createOrganization({
@@ -111,13 +98,13 @@ class SessionManager extends ChangeNotifier {
     required String adminPassword,
     required List<String> whitelist,
   }) async {
-    return await _api.post('/organizations/create', {
-      'name': name,
-      'manager_email': managerEmail,
-      'manager_password': managerPassword,
-      'admin_password': adminPassword,
-      'whitelist': whitelist,
-    });
+    return _authRepository.createOrganization(
+      name: name,
+      managerEmail: managerEmail,
+      managerPassword: managerPassword,
+      adminPassword: adminPassword,
+      whitelist: whitelist,
+    );
   }
 
   Future<bool> verifyAdmin({
@@ -125,12 +112,11 @@ class SessionManager extends ChangeNotifier {
     required String adminPassword,
     required String totpCode,
   }) async {
-    final response = await _api.post('/organizations/verify_admin', {
-      'organization_id': organizationId,
-      'admin_password': adminPassword,
-      'totp_code': totpCode,
-    });
-    final verified = response['verified'] == true;
+    final verified = await _authRepository.verifyAdmin(
+      organizationId: organizationId,
+      adminPassword: adminPassword,
+      totpCode: totpCode,
+    );
     if (verified) {
       _isAdminVerified = true;
       notifyListeners();
@@ -156,7 +142,7 @@ class SessionManager extends ChangeNotifier {
   Future<void> updateWhitelist(List<String> emails) async {
     final orgId = _currentUser?.organizationId;
     if (orgId == null) throw Exception('No organization linked to user');
-    await _api.post('/organizations/$orgId/whitelist', {'emails': emails});
+    await _authRepository.updateWhitelist(orgId, emails);
   }
 
   Future<void> addMachine({
@@ -167,12 +153,13 @@ class SessionManager extends ChangeNotifier {
   }) async {
     final orgId = _currentUser?.organizationId;
     if (orgId == null) throw Exception('No organization linked to user');
-    await _api.post('/organizations/$orgId/machines', {
-      'vin': vin,
-      'name': name,
-      'lat': lat,
-      'lng': lng,
-    });
+    await _authRepository.addMachine(
+      organizationId: orgId,
+      vin: vin,
+      name: name,
+      lat: lat,
+      lng: lng,
+    );
   }
 
   void logout() {
@@ -202,6 +189,8 @@ class SessionManager extends ChangeNotifier {
         } else {
           await _clearPersistedSession();
         }
+      } else {
+        await _restoreCliSessionIfPresent(prefs);
       }
     } catch (e) {
       debugPrint('Session restore failed: $e');
@@ -219,6 +208,36 @@ class SessionManager extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenStorageKey, accessToken);
     await prefs.setString(_userStorageKey, jsonEncode(user.toJson()));
+  }
+
+  Future<void> _restoreCliSessionIfPresent(SharedPreferences prefs) async {
+    if (disableCliSessionImportForTests) return;
+    if (kIsWeb) return;
+    if (Platform.environment['FLUTTER_TEST'] == 'true') return;
+    final home = Platform.environment['HOME'];
+    if (home == null || home.isEmpty) return;
+    final surfaceFile = File('$home/.vending-backpack/surface-control.json');
+    if (!await surfaceFile.exists()) return;
+    final surfacePayload = jsonDecode(await surfaceFile.readAsString());
+    if (surfacePayload is! Map<String, dynamic> ||
+        surfacePayload['importSession'] != true) {
+      return;
+    }
+    final file = File('$home/.vending-backpack/session.json');
+    if (!await file.exists()) return;
+    final raw = await file.readAsString();
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map<String, dynamic>) return;
+    final accessToken = decoded['access_token']?.toString();
+    final userJson = decoded['user'];
+    if (accessToken == null || accessToken.isEmpty || userJson is! Map<String, dynamic>) {
+      return;
+    }
+    ApiClient.setAccessToken(accessToken);
+    _currentUser = User.fromJson(userJson);
+    _isAuthenticated = true;
+    await prefs.setString(_tokenStorageKey, accessToken);
+    await prefs.setString(_userStorageKey, jsonEncode(_currentUser!.toJson()));
   }
 
   Future<void> _clearPersistedSession() async {

@@ -1,0 +1,12 @@
+README.md
+pyproject.toml
+src/vending_backpack_cli/__init__.py
+src/vending_backpack_cli/api.py
+src/vending_backpack_cli/cli.py
+src/vending_backpack_cli/session_store.py
+src/vending_backpack_cli.egg-info/PKG-INFO
+src/vending_backpack_cli.egg-info/SOURCES.txt
+src/vending_backpack_cli.egg-info/dependency_links.txt
+src/vending_backpack_cli.egg-info/entry_points.txt
+src/vending_backpack_cli.egg-info/requires.txt
+src/vending_backpack_cli.egg-info/top_level.txt

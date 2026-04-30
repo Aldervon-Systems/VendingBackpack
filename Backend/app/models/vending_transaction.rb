@@ -3,8 +3,11 @@ class VendingTransaction < ApplicationRecord
   STATUS_REFUNDED = "refunded"
   STATUSES = [STATUS_COMPLETED, STATUS_REFUNDED].freeze
 
+  belongs_to :organization, optional: true
   belongs_to :item
   belongs_to :machine, foreign_key: :machine_id, primary_key: :id, optional: true
+
+  before_validation :assign_related_organization_if_blank
 
   validates :amount, numericality: { greater_than: 0 }
   validates :status, inclusion: { in: STATUSES }
@@ -26,5 +29,11 @@ class VendingTransaction < ApplicationRecord
       "createdAt" => created_at&.iso8601,
       "updatedAt" => updated_at&.iso8601
     }
+  end
+
+  private
+
+  def assign_related_organization_if_blank
+    self.organization_id ||= machine&.organization_id || item&.organization_id
   end
 end

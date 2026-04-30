@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 
 class ApiClient {
-  static const String _defaultNonWebBaseUrl = 'http://localhost:9090/api';
+  static const String _defaultNonWebBaseUrl = 'https://app.aldervon.com/api';
   static const String _baseUrlOverride = String.fromEnvironment('API_BASE_URL');
   static String? _accessToken;
 

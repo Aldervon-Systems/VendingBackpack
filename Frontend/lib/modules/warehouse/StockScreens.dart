@@ -138,7 +138,7 @@ class StockScreens extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(ship.description.toUpperCase(), style: AppStyle.label(fontWeight: FontWeight.bold, color: AppColors.dataPrimary)),
-                                  Text('${ship.date.month}/${ship.date.day}/${ship.date.year}', style: AppStyle.metric(fontSize: 10, color: AppColors.dataSecondary)),
+                                  Text(ship.scheduledFor, style: AppStyle.metric(fontSize: 10, color: AppColors.dataSecondary)),
                                 ],
                               ),
                             ),
@@ -235,7 +235,7 @@ class StockScreens extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text('${item.qty}', style: AppStyle.metric(fontSize: 20, color: item.qty < 20 ? AppColors.warning : AppColors.dataPrimary)),
+                          Text('${item.quantity}', style: AppStyle.metric(fontSize: 20, color: item.quantity < 20 ? AppColors.warning : AppColors.dataPrimary)),
                           Text('IN STOCK', style: AppStyle.label(fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
                         ],
                       ),
@@ -262,17 +262,19 @@ class StockScreens extends StatelessWidget {
               ],
             ),
             body: body,
-            floatingActionButton: FloatingActionButton(
-              backgroundColor: AppColors.dataPrimary,
-              foregroundColor: Colors.white,
-              elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              onPressed: () async {
-                final code = await Navigator.push(context, MaterialPageRoute(builder: (context) => const ScanScreen()));
-                if (code != null && context.mounted) _processScan(context, controller, code);
-              },
-              child: const Icon(Icons.qr_code_scanner, size: 28),
-            ),
+            floatingActionButton: isManager
+                ? FloatingActionButton(
+                    backgroundColor: AppColors.dataPrimary,
+                    foregroundColor: Colors.white,
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    onPressed: () async {
+                      final code = await Navigator.push(context, MaterialPageRoute(builder: (context) => const ScanScreen()));
+                      if (code != null && context.mounted) _processScan(context, controller, code);
+                    },
+                    child: const Icon(Icons.qr_code_scanner, size: 28),
+                  )
+                : null,
           );
         },
       ),
